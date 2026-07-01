@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dev Productivity Hub</title>
+  <meta name="description" content="A developer-focused productivity app with notes, Pomodoro timer, and mini calendar." />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['"Fira Code"', 'monospace'],
+          },
+          colors: {
+            teal: { 400: '#2dd4bf', 500: '#14b8a6', 600: '#0d9488' },
+            orange: { 400: '#fb923c', 500: '#f97316', 600: '#ea580c' },
+          },
+          keyframes: {
+            pulseGlow: {
+              '0%, 100%': { boxShadow: '0 0 12px 2px rgba(249,115,22,0.4)' },
+              '50%':      { boxShadow: '0 0 28px 8px rgba(249,115,22,0.7)' },
+            },
+            fadeIn: {
+              from: { opacity: '0', transform: 'translateY(6px)' },
+              to:   { opacity: '1', transform: 'translateY(0)' },
+            },
+          },
+          animation: {
+            pulseGlow: 'pulseGlow 2s ease-in-out infinite',
+            fadeIn:    'fadeIn 0.25s ease-out',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- React 18 & Babel -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    html, body, #root { height: 100%; margin: 0; padding: 0; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #18181b; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #14b8a6; }
+
+    /* Code block simulated syntax highlighting */
+    .code-preview .kw  { color: #c792ea; }
+    .code-preview .fn  { color: #82aaff; }
+    .code-preview .str { color: #c3e88d; }
+    .code-preview .cm  { color: #546e7a; font-style: italic; }
+    .code-preview .num { color: #f78c6c; }
+    .code-preview .op  { color: #89ddff; }
+    .code-preview .var { color: #eeffff; }
+
+    /* Pomodoro ring */
+    .pomo-ring { transform-origin: center; transform: rotate(-90deg); }
+
+    /* Smooth resize for panels */
+    .panel-anim { transition: width 0.2s ease; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans antialiased">
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+/* ─────────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────────── */
+const LS_KEY = 'dph_notes_v2';
+const nowISO = () => new Date().toISOString();
+const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-GB', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
+const fmtTime = (s) => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+
+function uid() {
+  return '_' + Math.random().toString(36).slice(2,11);
+}
+
+const INITIAL_NOTES = [
+  {
+    id: uid(),
+    title: 'Belajar Async Await JavaScript',
+    content: `# Belajar Async/Await JavaScript\n\nAsync/await adalah syntactic sugar di atas Promise yang membuat kode asynchronous terlihat seperti synchronous.\n\n## Contoh Dasar\n\n\`\`\`javascript\nasync function fetchData(url) {\n  try {\n    const response = await fetch(url);\n    const data = await response.json();\n    return data;\n  } catch (error) {\n    console.error('Fetch error:', error);\n    throw error;\n  }\n}\n\n// Memanggil fungsi\nfetchData('https://api.example.com/users')\n  .then(users => console.log(users))\n  .catch(err => console.error(err));\n\`\`\`\n\n## Tips Penting\n\n- Selalu gunakan \`try/catch\` untuk error handling\n- \`await\` hanya bisa dipakai di dalam \`async function\`\n- Gunakan \`Promise.all()\` untuk parallel requests\n`,
+    deadline: '2026-07-05',
+    createdAt: '2026-06-01T08:00:00.000Z',
+    updatedAt: '2026-06-20T14:30:00.000Z',
+    totalPomodoros: 3,
+    pomodoroLog: ['2026-06-20 14:30 — Focus session completed'],
+  },
+  {
+    id: uid(),
+    title: 'Tips Optimasi CSS Flexbox',
+    content: `# Tips Optimasi CSS Flexbox\n\nFlexbox sangat powerful untuk layout satu dimensi.\n\n## Properti Utama\n\n- \`display: flex\` — aktifkan flex container\n- \`justify-content\` — alignment di main axis\n- \`align-items\` — alignment di cross axis\n- \`flex-wrap: wrap\` — memungkinkan items wrap\n\n## Contoh Centering\n\n\`\`\`css\n.center-me {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  min-height: 100vh;\n}\n\`\`\`\n`,
+    deadline: null,
+    createdAt: '2026-06-05T10:00:00.000Z',
+    updatedAt: '2026-06-10T09:00:00.000Z',
+    totalPomodoros: 1,
+    pomodoroLog: [],
+  },
+  {
+    id: uid(),
+    title: 'Setup Tailwind Config',
+    content: `# Setup Tailwind CSS Config\n\nKonfigurasi Tailwind untuk project modern.\n\n## Install\n\n\`\`\`bash\nnpm install -D tailwindcss postcss autoprefixer\nnpx tailwindcss init -p\n\`\`\`\n\n## tailwind.config.js\n\n\`\`\`javascript\nmodule.exports = {\n  content: ['./src/**/*.{js,jsx,ts,tsx,vue}'],\n  darkMode: 'class',\n  theme: {\n    extend: {\n      colors: {\n        brand: '#14b8a6',\n      },\n    },\n  },\n  plugins: [],\n};\n\`\`\`\n`,
+    deadline: null,
+    createdAt: '2026-06-15T07:00:00.000Z',
+    updatedAt: '2026-06-16T11:00:00.000Z',
+    totalPomodoros: 0,
+    pomodoroLog: [],
+  },
+];
+
+/* ─────────────────────────────────────────────
+   MARKDOWN RENDERER (no external lib)
+───────────────────────────────────────────── */
+function syntaxHighlight(code, lang) {
+  const keywords = /\b(async|await|function|return|const|let|var|if|else|try|catch|throw|new|class|import|export|from|default|for|while|of|in|typeof|null|undefined|true|false|this|super)\b/g;
+  const strings  = /(["'`])(?:(?=(\\?))\2[\s\S])*?\1/g;
+  const comments = /(\/\/[^\n]*)|(\/\*[\s\S]*?\*\/)/g;
+  const numbers  = /\b(\d+\.?\d*)\b/g;
+  const fnNames  = /\b([a-zA-Z_$][a-zA-Z0-9_$]*)\s*(?=\()/g;
+
+  let escaped = code
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+
+  // Order matters — comments first, then strings, then keywords
+  escaped = escaped
+    .replace(comments, m => `<span class="cm">${m}</span>`)
+    .replace(strings,  m => `<span class="str">${m}</span>`)
+    .replace(keywords, m => `<span class="kw">${m}</span>`)
+    .replace(fnNames,  (m, n) => `<span class="fn">${n}</span>(`)
+    .replace(numbers,  m => `<span class="num">${m}</span>`);
+
+  return escaped;
+}
+
+function renderMarkdown(md) {
+  if (!md) return '';
+  const lines = md.split('\n');
+  let html = '';
+  let inCode = false;
+  let codeLang = '';
+  let codeBuffer = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Code block start/end
+    if (line.startsWith('```')) {
+      if (!inCode) {
+        inCode = true;
+        codeLang = line.slice(3).trim();
+        codeBuffer = [];
+      } else {
+        const highlighted = syntaxHighlight(codeBuffer.join('\n'), codeLang);
+        html += `<pre class="code-preview bg-zinc-900 border border-zinc-700 rounded-lg p-4 my-3 overflow-x-auto font-mono text-sm leading-relaxed"><code>${highlighted}</code></pre>`;
+        inCode = false;
+        codeBuffer = [];
+        codeLang = '';
+      }
+      continue;
+    }
+
+    if (inCode) { codeBuffer.push(line); continue; }
+
+    // Headings
+    if (line.startsWith('### ')) { html += `<h3 class="text-base font-semibold text-teal-400 mt-4 mb-1">${line.slice(4)}</h3>`; continue; }
+    if (line.startsWith('## '))  { html += `<h2 class="text-lg font-semibold text-teal-300 mt-5 mb-1 border-b border-zinc-700 pb-1">${line.slice(3)}</h2>`; continue; }
+    if (line.startsWith('# '))   { html += `<h1 class="text-xl font-bold text-white mt-3 mb-2">${line.slice(2)}</h1>`; continue; }
+
+    // Bullets
+    if (line.startsWith('- ')) {
+      html += `<li class="ml-4 list-disc text-zinc-300 text-sm">${inlineFormat(line.slice(2))}</li>`;
+      continue;
+    }
+
+    // Blockquote
+    if (line.startsWith('> ')) {
+      html += `<blockquote class="border-l-4 border-teal-500 pl-3 italic text-zinc-400 text-sm my-2">${line.slice(2)}</blockquote>`;
+      continue;
+    }
+
+    // Horizontal rule
+    if (line === '---' || line === '***') { html += `<hr class="border-zinc-700 my-3" />`; continue; }
+
+    // Empty line
+    if (line.trim() === '') { html += `<br />`; continue; }
+
+    // Paragraph
+    html += `<p class="text-zinc-300 text-sm leading-relaxed">${inlineFormat(line)}</p>`;
+  }
+
+  return html;
+}
+
+function inlineFormat(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em class="text-zinc-200">$1</em>')
+    .replace(/`(.+?)`/g, '<code class="bg-zinc-800 text-orange-400 px-1 rounded font-mono text-xs">$1</code>')
+    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="text-teal-400 underline" target="_blank">$1</a>');
+}
+
+/* ─────────────────────────────────────────────
+   LUCIDE ICON WRAPPER
+───────────────────────────────────────────── */
+function Icon({ name, size = 16, className = '' }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (ref.current && window.lucide) {
+      ref.current.innerHTML = '';
+      const iconFn = lucide[name] || lucide['HelpCircle'];
+      const el = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      el.setAttribute('width', size);
+      el.setAttribute('height', size);
+      el.setAttribute('viewBox', '0 0 24 24');
+      el.setAttribute('fill', 'none');
+      el.setAttribute('stroke', 'currentColor');
+      el.setAttribute('stroke-width', '2');
+      el.setAttribute('stroke-linecap', 'round');
+      el.setAttribute('stroke-linejoin', 'round');
+      el.innerHTML = iconFn[2].map(([tag, attrs]) => {
+        const svgEl = `<${tag} ${Object.entries(attrs).map(([k,v])=>`${k}="${v}"`).join(' ')} />`;
+        return svgEl;
+      }).join('');
+      ref.current.appendChild(el);
+    }
+  }, [name, size]);
+  return <span ref={ref} className={`inline-flex items-center justify-center ${className}`} />;
+}
+
+/* ─────────────────────────────────────────────
+   MINI CALENDAR (July 2026)
+───────────────────────────────────────────── */
+function MiniCalendar({ notes }) {
+  const YEAR = 2026, MONTH = 6; // July = index 6
+  const today = 1; // July 1, 2026
+  const firstDay = new Date(YEAR, MONTH, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(YEAR, MONTH + 1, 0).getDate(); // 31
+
+  // Collect deadline dates for July
+  const deadlineDays = new Set(
+    notes
+      .filter(n => n.deadline && n.deadline.startsWith('2026-07'))
+      .map(n => parseInt(n.deadline.split('-')[2], 10))
+  );
+
+  const cells = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  const DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+  return (
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-semibold text-zinc-300 tracking-widest uppercase">July 2026</span>
+        <Icon name="Calendar" size={14} className="text-teal-400" />
+      </div>
+      <div className="grid grid-cols-7 gap-0.5 mb-1">
+        {DAYS.map(d => (
+          <div key={d} className="text-center text-[10px] font-medium text-zinc-500 py-0.5">{d}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-0.5">
+        {cells.map((day, i) => {
+          if (!day) return <div key={`e-${i}`} />;
+          const isToday = day === today;
+          const hasDeadline = deadlineDays.has(day);
+          return (
+            <div
+              key={day}
+              className={`relative flex flex-col items-center justify-center rounded-md py-1 text-[11px] font-medium transition-colors
+                ${isToday ? 'bg-teal-500 text-white font-bold' : 'text-zinc-400 hover:bg-zinc-800 hover:text-white cursor-default'}
+              `}
+            >
+              {day}
+              {hasDeadline && !isToday && (
+                <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-orange-400" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex items-center gap-3 mt-3 pt-2 border-t border-zinc-800">
+        <div className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-teal-500 inline-block" />
+          <span className="text-[10px] text-zinc-500">Today</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-orange-400 inline-block" />
+          <span className="text-[10px] text-zinc-500">Deadline</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   POMODORO TIMER
+───────────────────────────────────────────── */
+const POMO_DURATION = 25 * 60; // 25 min
+const RADIUS = 54;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+function PomodoroTimer({ notes, selectedId, onComplete }) {
+  const [timeLeft, setTimeLeft]   = useState(POMO_DURATION);
+  const [running, setRunning]     = useState(false);
+  const [linkedId, setLinkedId]   = useState(selectedId || '');
+  const intervalRef = useRef(null);
+
+  // Keep linkedId in sync with selected note
+  useEffect(() => { if (selectedId) setLinkedId(selectedId); }, [selectedId]);
+
+  useEffect(() => {
+    if (running) {
+      intervalRef.current = setInterval(() => {
+        setTimeLeft(t => {
+          if (t <= 1) {
+            clearInterval(intervalRef.current);
+            setRunning(false);
+            handleComplete();
+            return 0;
+          }
+          return t - 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(intervalRef.current);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [running]);
+
+  function handleComplete() {
+    onComplete(linkedId);
+    // Browser notification if supported
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('🍅 Pomodoro Complete!', { body: 'Great focus session! Take a break.' });
+    }
+  }
+
+  function reset() {
+    setRunning(false);
+    setTimeLeft(POMO_DURATION);
+  }
+
+  const progress = (POMO_DURATION - timeLeft) / POMO_DURATION;
+  const strokeOffset = CIRCUMFERENCE * (1 - progress);
+  const pct = Math.round(progress * 100);
+
+  return (
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex flex-col items-center gap-4">
+      <div className="flex items-center justify-between w-full">
+        <span className="text-xs font-semibold text-zinc-400 tracking-widest uppercase">Pomodoro</span>
+        <Icon name="Timer" size={14} className="text-orange-400" />
+      </div>
+
+      {/* SVG Ring */}
+      <div className="relative flex items-center justify-center" style={{ width: 140, height: 140 }}>
+        <svg width="140" height="140" viewBox="0 0 140 140" className={running ? 'animate-pulseGlow rounded-full' : ''}>
+          {/* Track */}
+          <circle cx="70" cy="70" r={RADIUS} fill="none" stroke="#27272a" strokeWidth="10" />
+          {/* Progress */}
+          <circle
+            cx="70" cy="70" r={RADIUS} fill="none"
+            stroke="url(#pomoGrad)" strokeWidth="10"
+            strokeLinecap="round"
+            strokeDasharray={CIRCUMFERENCE}
+            strokeDashoffset={strokeOffset}
+            className="pomo-ring transition-all duration-1000"
+          />
+          <defs>
+            <linearGradient id="pomoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#fb923c" />
+              <stop offset="100%" stopColor="#f97316" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <div className="absolute flex flex-col items-center">
+          <span className="text-3xl font-bold font-mono text-orange-400 tabular-nums">{fmtTime(timeLeft)}</span>
+          <span className="text-[10px] text-zinc-500 mt-0.5">{running ? 'Focusing...' : timeLeft === POMO_DURATION ? 'Ready' : 'Paused'}</span>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="flex items-center gap-3">
+        <button
+          id="pomo-reset"
+          onClick={reset}
+          className="w-9 h-9 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center transition-colors border border-zinc-700"
+          title="Reset"
+        >
+          <Icon name="RotateCcw" size={14} className="text-zinc-400" />
+        </button>
+        <button
+          id="pomo-playpause"
+          onClick={() => setRunning(r => !r)}
+          className="w-12 h-12 rounded-full bg-orange-500 hover:bg-orange-400 flex items-center justify-center transition-all shadow-lg shadow-orange-900/50"
+          title={running ? 'Pause' : 'Play'}
+        >
+          <Icon name={running ? 'Pause' : 'Play'} size={20} className="text-white" />
+        </button>
+        <button
+          id="pomo-mock-complete"
+          onClick={handleComplete}
+          className="w-9 h-9 rounded-full bg-zinc-800 hover:bg-teal-700 flex items-center justify-center transition-colors border border-zinc-700"
+          title="Mock Complete (test)"
+        >
+          <Icon name="CheckCircle" size={14} className="text-teal-400" />
+        </button>
+      </div>
+
+      {/* Link to note */}
+      <div className="w-full">
+        <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Link to Note</label>
+        <select
+          id="pomo-link-note"
+          value={linkedId}
+          onChange={e => setLinkedId(e.target.value)}
+          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-orange-500"
+        >
+          <option value="">— None —</option>
+          {notes.map(n => (
+            <option key={n.id} value={n.id}>{n.title}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="w-full text-center">
+        <span className="text-[10px] text-zinc-600">Tip: Press ✓ to mock a complete session</span>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   NOTE ITEM (sidebar)
+───────────────────────────────────────────── */
+function NoteItem({ note, isActive, onSelect, onDelete }) {
+  const snippet = note.content.replace(/```[\s\S]*?```/g,'').replace(/[#*`>\-]/g,'').trim().slice(0,60);
+  return (
+    <div
+      onClick={onSelect}
+      className={`group relative flex flex-col gap-1 p-3 rounded-lg cursor-pointer border transition-all animate-fadeIn
+        ${isActive
+          ? 'bg-teal-500/10 border-teal-500/40 shadow-md shadow-teal-500/10'
+          : 'border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800/60'
+        }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className={`text-sm font-medium leading-snug truncate ${isActive ? 'text-teal-300' : 'text-zinc-200'}`}>
+          {note.title || 'Untitled Note'}
+        </span>
+        <button
+          id={`delete-note-${note.id}`}
+          onClick={e => { e.stopPropagation(); onDelete(note.id); }}
+          className="opacity-0 group-hover:opacity-100 flex-shrink-0 w-5 h-5 rounded flex items-center justify-center text-zinc-500 hover:text-red-400 hover:bg-red-400/10 transition-all"
+          title="Delete note"
+        >
+          <Icon name="Trash2" size={12} />
+        </button>
+      </div>
+      <p className="text-[11px] text-zinc-500 line-clamp-1">{snippet || 'Empty note...'}</p>
+      {note.deadline && (
+        <div className="flex items-center gap-1 mt-0.5">
+          <Icon name="CalendarDays" size={10} className="text-orange-400" />
+          <span className="text-[10px] text-orange-400">{note.deadline}</span>
+        </div>
+      )}
+      {note.totalPomodoros > 0 && (
+        <div className="flex items-center gap-1">
+          <span className="text-[10px]">🍅</span>
+          <span className="text-[10px] text-zinc-500">× {note.totalPomodoros}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   MARKDOWN EDITOR PANEL
+───────────────────────────────────────────── */
+function EditorPanel({ note, onChange }) {
+  const [view, setView] = useState('split'); // 'editor' | 'preview' | 'split'
+  const previewHTML = useMemo(() => renderMarkdown(note.content), [note.content]);
+
+  function update(field, value) {
+    onChange({ ...note, [field]: value, updatedAt: nowISO() });
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Top bar */}
+      <div className="flex-shrink-0 px-5 pt-5 pb-3 border-b border-zinc-800">
+        <input
+          id="note-title-input"
+          className="w-full bg-transparent text-xl font-bold text-white placeholder-zinc-600 focus:outline-none border-b border-transparent focus:border-teal-500/50 pb-1 transition-colors"
+          placeholder="Note title..."
+          value={note.title}
+          onChange={e => update('title', e.target.value)}
+        />
+        {/* Meta */}
+        <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-zinc-500">
+          <div className="flex items-center gap-1">
+            <Icon name="Clock" size={12} className="text-zinc-600" />
+            <span>Created: {fmtDate(note.createdAt)}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Icon name="RefreshCw" size={12} className="text-zinc-600" />
+            <span>Updated: {fmtDate(note.updatedAt)}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Icon name="CalendarCheck" size={12} className="text-orange-400" />
+            <input
+              id="note-deadline-input"
+              type="date"
+              value={note.deadline || ''}
+              onChange={e => update('deadline', e.target.value)}
+              className="bg-zinc-900 border border-zinc-700 rounded px-2 py-0.5 text-xs text-orange-400 focus:outline-none focus:border-orange-500 cursor-pointer"
+            />
+          </div>
+          <div className="flex items-center gap-1 ml-auto">
+            <span>🍅 {note.totalPomodoros} sessions</span>
+          </div>
+        </div>
+
+        {/* View toggle */}
+        <div className="flex gap-1 mt-3 bg-zinc-900 p-0.5 rounded-lg w-fit">
+          {[['editor','Code'], ['split','Split'], ['preview','Preview']].map(([v,l]) => (
+            <button
+              key={v}
+              id={`view-${v}`}
+              onClick={() => setView(v)}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-all
+                ${view === v ? 'bg-zinc-700 text-white shadow' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Editor/Preview area */}
+      <div className="flex-1 flex min-h-0">
+        {/* Textarea */}
+        {(view === 'editor' || view === 'split') && (
+          <div className={`flex flex-col ${view === 'split' ? 'w-1/2 border-r border-zinc-800' : 'w-full'}`}>
+            <div className="px-3 py-1.5 bg-zinc-900/50 border-b border-zinc-800 flex items-center gap-2">
+              <Icon name="Code2" size={12} className="text-zinc-500" />
+              <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Markdown</span>
+            </div>
+            <textarea
+              id="note-content-textarea"
+              className="flex-1 bg-transparent text-sm font-mono text-zinc-300 p-4 resize-none focus:outline-none leading-relaxed placeholder-zinc-700"
+              value={note.content}
+              onChange={e => update('content', e.target.value)}
+              placeholder="Start typing in Markdown...&#10;&#10;# Heading&#10;- Bullet&#10;```javascript&#10;// code&#10;```"
+              spellCheck={false}
+            />
+          </div>
+        )}
+
+        {/* Preview */}
+        {(view === 'preview' || view === 'split') && (
+          <div className={`flex flex-col ${view === 'split' ? 'w-1/2' : 'w-full'}`}>
+            <div className="px-3 py-1.5 bg-zinc-900/50 border-b border-zinc-800 flex items-center gap-2">
+              <Icon name="Eye" size={12} className="text-teal-500" />
+              <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Preview</span>
+            </div>
+            <div
+              className="flex-1 overflow-y-auto p-4 prose prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: previewHTML }}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Pomodoro log */}
+      {note.pomodoroLog && note.pomodoroLog.length > 0 && (
+        <div className="flex-shrink-0 border-t border-zinc-800 px-5 py-3">
+          <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">🍅 Session Log</p>
+          <div className="max-h-20 overflow-y-auto space-y-0.5">
+            {note.pomodoroLog.slice().reverse().map((entry, i) => (
+              <p key={i} className="text-[10px] text-zinc-500 font-mono">{entry}</p>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   MAIN APP
+───────────────────────────────────────────── */
+function App() {
+  const [notes, setNotes]         = useState(() => {
+    try {
+      const stored = localStorage.getItem(LS_KEY);
+      return stored ? JSON.parse(stored) : INITIAL_NOTES;
+    } catch { return INITIAL_NOTES; }
+  });
+  const [selectedId, setSelectedId] = useState(() => {
+    try {
+      const stored = localStorage.getItem(LS_KEY);
+      const ns = stored ? JSON.parse(stored) : INITIAL_NOTES;
+      return ns[0]?.id ?? null;
+    } catch { return INITIAL_NOTES[0]?.id; }
+  });
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Persist to LS on every change
+  useEffect(() => {
+    localStorage.setItem(LS_KEY, JSON.stringify(notes));
+  }, [notes]);
+
+  const selectedNote = notes.find(n => n.id === selectedId) ?? notes[0];
+
+  function addNote() {
+    const n = {
+      id: uid(),
+      title: '',
+      content: '',
+      deadline: null,
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      totalPomodoros: 0,
+      pomodoroLog: [],
+    };
+    setNotes(prev => [n, ...prev]);
+    setSelectedId(n.id);
+  }
+
+  function deleteNote(id) {
+    setNotes(prev => prev.filter(n => n.id !== id));
+    setSelectedId(prev => {
+      const remaining = notes.filter(n => n.id !== id);
+      return remaining.length > 0 ? remaining[0].id : null;
+    });
+  }
+
+  function updateNote(updated) {
+    setNotes(prev => prev.map(n => n.id === updated.id ? updated : n));
+  }
+
+  function handlePomodoroComplete(linkedNoteId) {
+    const targetId = linkedNoteId || selectedId;
+    if (!targetId) return;
+    const ts = new Date().toLocaleString('en-GB', { dateStyle:'short', timeStyle:'short' });
+    setNotes(prev => prev.map(n => {
+      if (n.id !== targetId) return n;
+      return {
+        ...n,
+        totalPomodoros: n.totalPomodoros + 1,
+        pomodoroLog: [...(n.pomodoroLog || []), `${ts} — Focus session completed`],
+        updatedAt: nowISO(),
+      };
+    }));
+  }
+
+  const NAV_ITEMS = [
+    { name: 'Dashboard', icon: 'LayoutDashboard' },
+    { name: 'Notes',     icon: 'FileText' },
+    { name: 'Projects',  icon: 'FolderKanban' },
+    { name: 'Calendar',  icon: 'Calendar' },
+    { name: 'Settings',  icon: 'Settings' },
+  ];
+  const [activeNav, setActiveNav] = useState('Notes');
+
+  return (
+    <div className="flex h-screen bg-zinc-950 overflow-hidden select-none">
+
+      {/* ── LEFT: Sidebar ── */}
+      <aside className={`flex-shrink-0 flex flex-col bg-zinc-900 border-r border-zinc-800 transition-all duration-200 ${sidebarOpen ? 'w-64' : 'w-16'}`}>
+        {/* Header */}
+        <div className="flex items-center gap-2 px-4 py-4 border-b border-zinc-800">
+          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-lg shadow-teal-900/50">
+            <Icon name="Zap" size={16} className="text-white" />
+          </div>
+          {sidebarOpen && (
+            <div className="flex flex-col leading-tight overflow-hidden">
+              <span className="text-xs font-bold text-white tracking-widest uppercase">Dev Hub</span>
+              <span className="text-[9px] text-zinc-500 tracking-wider">Productivity Suite</span>
+            </div>
+          )}
+          <button
+            id="sidebar-toggle"
+            onClick={() => setSidebarOpen(o => !o)}
+            className="ml-auto w-6 h-6 flex items-center justify-center rounded text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
+          >
+            <Icon name={sidebarOpen ? 'PanelLeftClose' : 'PanelLeft'} size={14} />
+          </button>
+        </div>
+
+        {/* Nav */}
+        <nav className="px-2 py-3 space-y-0.5">
+          {NAV_ITEMS.map(item => (
+            <button
+              key={item.name}
+              id={`nav-${item.name.toLowerCase()}`}
+              onClick={() => setActiveNav(item.name)}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all
+                ${activeNav === item.name
+                  ? 'bg-teal-500/15 text-teal-400 font-medium'
+                  : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800'
+                }`}
+            >
+              <Icon name={item.icon} size={16} className="flex-shrink-0" />
+              {sidebarOpen && <span className="truncate">{item.name}</span>}
+            </button>
+          ))}
+        </nav>
+
+        {sidebarOpen && (
+          <>
+            <div className="px-3 pt-3 pb-2 border-t border-zinc-800 mt-1">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Notes</span>
+                <button
+                  id="new-note-btn"
+                  onClick={addNote}
+                  className="flex items-center gap-1 text-[10px] text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 px-2 py-1 rounded-md transition-all border border-teal-500/30 hover:border-teal-400/50"
+                >
+                  <Icon name="Plus" size={10} />
+                  New
+                </button>
+              </div>
+              <div className="space-y-1.5 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+                {notes.map(note => (
+                  <NoteItem
+                    key={note.id}
+                    note={note}
+                    isActive={note.id === selectedId}
+                    onSelect={() => setSelectedId(note.id)}
+                    onDelete={deleteNote}
+                  />
+                ))}
+                {notes.length === 0 && (
+                  <p className="text-center text-xs text-zinc-600 py-6">No notes yet.<br/>Click "+ New" to start.</p>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Footer */}
+        <div className="mt-auto px-3 py-3 border-t border-zinc-800">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">D</div>
+            {sidebarOpen && <span className="text-xs text-zinc-400 truncate">Developer</span>}
+          </div>
+        </div>
+      </aside>
+
+      {/* ── MIDDLE: Editor ── */}
+      <main className="flex-1 flex flex-col min-w-0 bg-zinc-950">
+        {selectedNote ? (
+          <EditorPanel
+            key={selectedNote.id}
+            note={selectedNote}
+            onChange={updateNote}
+          />
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-zinc-600">
+            <Icon name="FileText" size={48} className="mb-4 opacity-30" />
+            <p className="text-sm">Select or create a note to get started</p>
+            <button
+              onClick={addNote}
+              className="mt-4 px-4 py-2 bg-teal-500/20 border border-teal-500/40 text-teal-400 rounded-lg text-sm hover:bg-teal-500/30 transition-all"
+            >
+              + New Note
+            </button>
+          </div>
+        )}
+      </main>
+
+      {/* ── RIGHT: Utilities ── */}
+      <aside className="flex-shrink-0 w-64 flex flex-col bg-zinc-900 border-l border-zinc-800 overflow-y-auto">
+        <div className="p-4 border-b border-zinc-800">
+          <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Focus & Time</span>
+        </div>
+        <div className="p-3 space-y-3">
+          <PomodoroTimer
+            notes={notes}
+            selectedId={selectedId}
+            onComplete={handlePomodoroComplete}
+          />
+          <MiniCalendar notes={notes} />
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
