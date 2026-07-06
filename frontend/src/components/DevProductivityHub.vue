@@ -897,7 +897,7 @@
           <div class="flex-1 flex min-h-0" style="overflow:hidden">
 
             <!-- Kanban Board -->
-            <div class="flex-1 overflow-x-auto overflow-y-hidden p-6">
+            <div class="flex-1 min-w-0 overflow-x-auto overflow-y-hidden p-6">
               <div class="flex gap-4 h-full" style="min-width:max-content">
 
               <!-- Kanban Column -->
