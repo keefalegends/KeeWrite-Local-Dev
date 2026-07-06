@@ -147,97 +147,211 @@
     <main class="flex-1 flex flex-col min-w-0 bg-zinc-950 overflow-hidden">
 
       <!-- ── VIEW: DASHBOARD (Pomodoro) ── -->
-      <div v-if="activeNav === 'Dashboard'" class="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto">
-        <div class="w-full max-w-md">
-          <!-- Title -->
-          <div class="flex items-center gap-3 mb-8">
-            <div class="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-              <Timer :size="20" class="text-orange-400" />
+      <div v-if="activeNav === 'Dashboard'" class="flex-1 overflow-y-auto p-6 md:p-8">
+        <!-- Title -->
+        <div class="flex items-center gap-3 mb-8 max-w-5xl mx-auto">
+          <div class="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+            <Timer :size="20" class="text-orange-400" />
+          </div>
+          <div>
+            <h1 class="text-lg font-bold text-white">Dashboard</h1>
+            <p class="text-xs text-zinc-500">Kelola fokus harian, tugas, dan tantangan belajarmu</p>
+          </div>
+        </div>
+
+        <!-- Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-5xl mx-auto items-start">
+          
+          <!-- Left/Dominant Column: Pomodoro Timer & Log -->
+          <div class="lg:col-span-7 space-y-6">
+            <!-- Timer card -->
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 flex flex-col items-center gap-6 shadow-2xl">
+              <!-- SVG Ring -->
+              <div class="relative flex items-center justify-center" style="width:180px;height:180px">
+                <svg width="180" height="180" viewBox="0 0 180 180"
+                     :class="['rounded-full', timerRunning ? 'animate-pulseGlow' : '']">
+                  <circle cx="90" cy="90" r="70" fill="none" stroke="#27272a" stroke-width="10" />
+                  <circle
+                    cx="90" cy="90" r="70" fill="none"
+                    stroke="url(#pomoGradDash)" stroke-width="10" stroke-linecap="round"
+                    :stroke-dasharray="circumferenceLarge"
+                    :stroke-dashoffset="strokeOffsetLarge"
+                    style="transform-origin:center;transform:rotate(-90deg);transition:stroke-dashoffset 1s linear"
+                  />
+                  <defs>
+                    <linearGradient id="pomoGradDash" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#fb923c" />
+                      <stop offset="100%" stop-color="#f97316" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div class="absolute flex flex-col items-center">
+                  <span class="text-4xl font-bold font-mono text-orange-400 tabular-nums">
+                    {{ formatTime(timerLeft) }}
+                  </span>
+                  <span class="text-xs text-zinc-500 mt-1">
+                    {{ timerRunning ? 'Sedang fokus...' : timerLeft === POMO_DURATION ? 'Siap mulai' : 'Dijeda' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Controls -->
+              <div class="flex items-center gap-4">
+                <button id="pomo-reset" @click="resetTimer"
+                        class="w-11 h-11 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center
+                               transition-colors border border-zinc-700" title="Reset">
+                  <RotateCcw :size="16" class="text-zinc-400" />
+                </button>
+                <button id="pomo-playpause" @click="toggleTimer"
+                        class="w-16 h-16 rounded-full bg-orange-500 hover:bg-orange-400 flex items-center justify-center
+                               transition-all shadow-xl shadow-orange-900/50">
+                  <Pause v-if="timerRunning" :size="24" class="text-white" />
+                  <Play  v-else              :size="24" class="text-white" />
+                </button>
+                <button id="pomo-mock-complete" @click="completePomodoro"
+                        class="w-11 h-11 rounded-full bg-zinc-800 hover:bg-teal-700/80 flex items-center justify-center
+                               transition-colors border border-zinc-700" title="Mock Selesai (tes)">
+                  <CheckCircle :size="16" class="text-teal-400" />
+                </button>
+              </div>
+
+              <!-- Link to note -->
+              <div class="w-full">
+                <label class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1.5 block">
+                  Hubungkan ke Note
+                </label>
+                <select
+                  id="pomo-link-note"
+                  v-model="linkedNoteId"
+                  class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm
+                         text-zinc-300 focus:outline-none focus:border-orange-500 transition-colors"
+                >
+                  <option value="">— Tidak ada —</option>
+                  <option v-for="n in notes" :key="n.id" :value="n.id">{{ n.title || 'Untitled' }}</option>
+                </select>
+              </div>
+
+              <p class="text-[10px] text-zinc-650">✓ = mock selesai (untuk tes)</p>
             </div>
-            <div>
-              <h1 class="text-lg font-bold text-white">Pomodoro Timer</h1>
-              <p class="text-xs text-zinc-500">Fokus 25 menit, istirahat 5 menit</p>
+
+            <!-- Session Log -->
+            <div v-if="pomodoroLog.length > 0" class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-lg">
+              <p class="text-[10px] text-zinc-500 uppercase tracking-wider mb-3 font-semibold">🍅 Log Sesi</p>
+              <div class="space-y-2 max-h-36 overflow-y-auto">
+                <p v-for="(entry, i) in [...pomodoroLog].reverse()" :key="i"
+                   class="text-[11px] text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-850">{{ entry }}</p>
+              </div>
             </div>
           </div>
 
-          <!-- Timer card -->
-          <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 flex flex-col items-center gap-6 shadow-2xl">
-            <!-- SVG Ring -->
-            <div class="relative flex items-center justify-center" style="width:180px;height:180px">
-              <svg width="180" height="180" viewBox="0 0 180 180"
-                   :class="['rounded-full', timerRunning ? 'animate-pulseGlow' : '']">
-                <circle cx="90" cy="90" r="70" fill="none" stroke="#27272a" stroke-width="10" />
-                <circle
-                  cx="90" cy="90" r="70" fill="none"
-                  stroke="url(#pomoGradDash)" stroke-width="10" stroke-linecap="round"
-                  :stroke-dasharray="circumferenceLarge"
-                  :stroke-dashoffset="strokeOffsetLarge"
-                  style="transform-origin:center;transform:rotate(-90deg);transition:stroke-dashoffset 1s linear"
+          <!-- Right Column: Daily Focus Checklist & LeetCode Daily -->
+          <div class="lg:col-span-5 space-y-6">
+            
+            <!-- Widget 1: Daily Focus Checklist -->
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-xl space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <CheckCircle :size="16" class="text-orange-400" />
+                  <span class="text-xs font-bold text-white uppercase tracking-wider">Daily Focus</span>
+                </div>
+                <span class="text-[10px] text-zinc-500 font-mono bg-zinc-800 px-2 py-0.5 rounded-full">
+                  {{ dailyTasksCompletedCount }}/{{ dailyTasks.length }} Selesai
+                </span>
+              </div>
+
+              <!-- Task input -->
+              <form @submit.prevent="addDailyTask" class="flex gap-2">
+                <input
+                  v-model="newDailyTaskTitle"
+                  placeholder="Tambah tugas hari ini..."
+                  class="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-orange-500 transition-colors placeholder-zinc-600"
                 />
-                <defs>
-                  <linearGradient id="pomoGradDash" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#fb923c" />
-                    <stop offset="100%" stop-color="#f97316" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div class="absolute flex flex-col items-center">
-                <span class="text-4xl font-bold font-mono text-orange-400 tabular-nums">
-                  {{ formatTime(timerLeft) }}
-                </span>
-                <span class="text-xs text-zinc-500 mt-1">
-                  {{ timerRunning ? 'Sedang fokus...' : timerLeft === POMO_DURATION ? 'Siap mulai' : 'Dijeda' }}
-                </span>
+                <button
+                  type="submit"
+                  :disabled="!newDailyTaskTitle.trim()"
+                  class="w-8 h-8 rounded-xl bg-orange-500 hover:bg-orange-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-white transition-colors"
+                >
+                  <Plus :size="14" />
+                </button>
+              </form>
+
+              <!-- Task list -->
+              <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                <div
+                  v-for="task in dailyTasks"
+                  :key="task.id"
+                  class="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-zinc-950 border border-zinc-850 hover:border-zinc-700 transition-all group"
+                >
+                  <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
+                    <input
+                      type="checkbox"
+                      v-model="task.done"
+                      class="w-4 h-4 rounded border-zinc-700 text-teal-500 focus:ring-teal-500 focus:ring-offset-zinc-900 bg-zinc-800 cursor-pointer"
+                    />
+                    <span
+                      :class="['text-xs truncate transition-all',
+                               task.done ? 'line-through text-zinc-600 italic' : 'text-zinc-300 group-hover:text-white']"
+                    >
+                      {{ task.title }}
+                    </span>
+                  </label>
+                  <button
+                    @click="deleteDailyTask(task.id)"
+                    class="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 w-6 h-6 rounded-lg flex items-center justify-center hover:bg-red-500/10 transition-all flex-shrink-0"
+                  >
+                    <Trash2 :size="12" />
+                  </button>
+                </div>
+
+                <!-- Empty state -->
+                <div v-if="dailyTasks.length === 0" class="text-center py-6 text-zinc-550 text-xs">
+                  Belum ada tugas hari ini. Mulai dengan menulis satu tugas!
+                </div>
               </div>
             </div>
 
-            <!-- Controls -->
-            <div class="flex items-center gap-4">
-              <button id="pomo-reset" @click="resetTimer"
-                      class="w-11 h-11 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center
-                             transition-colors border border-zinc-700" title="Reset">
-                <RotateCcw :size="16" class="text-zinc-400" />
-              </button>
-              <button id="pomo-playpause" @click="toggleTimer"
-                      class="w-16 h-16 rounded-full bg-orange-500 hover:bg-orange-400 flex items-center justify-center
-                             transition-all shadow-xl shadow-orange-900/50">
-                <Pause v-if="timerRunning" :size="24" class="text-white" />
-                <Play  v-else              :size="24" class="text-white" />
-              </button>
-              <button id="pomo-mock-complete" @click="completePomodoro"
-                      class="w-11 h-11 rounded-full bg-zinc-800 hover:bg-teal-700/80 flex items-center justify-center
-                             transition-colors border border-zinc-700" title="Mock Selesai (tes)">
-                <CheckCircle :size="16" class="text-teal-400" />
-              </button>
+            <!-- Widget 2: LeetCode Daily & Quote -->
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-xl space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <Code2 :size="16" class="text-teal-400" />
+                  <span class="text-xs font-bold text-white uppercase tracking-wider">LeetCode Daily</span>
+                </div>
+                <span class="text-[10px] bg-teal-500/10 text-teal-400 border border-teal-500/20 px-2.5 py-0.5 rounded-full font-medium">
+                  Tantangan Harian
+                </span>
+              </div>
+              
+              <div class="bg-zinc-950 border border-zinc-850 rounded-xl p-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <h4 class="text-xs font-semibold text-zinc-100 leading-snug truncate">{{ dailyLeetCode.title }}</h4>
+                    <p class="text-[10px] text-zinc-500 mt-1 font-mono">{{ dailyLeetCode.category }}</p>
+                  </div>
+                  <span :style="{ color: dailyLeetCode.tagColor, backgroundColor: dailyLeetCode.tagColor + '15', borderColor: dailyLeetCode.tagColor + '30' }"
+                        class="text-[9px] border px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider flex-shrink-0">
+                    {{ dailyLeetCode.difficulty }}
+                  </span>
+                </div>
+                
+                <a :href="dailyLeetCode.link" target="_blank"
+                   class="mt-4 w-full flex items-center justify-center gap-1.5 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl text-xs font-semibold transition-all">
+                  Solve Challenge
+                  <ExternalLink :size="12" />
+                </a>
+              </div>
+
+              <!-- Quote of the Day -->
+              <div class="border-t border-zinc-800/60 pt-4">
+                <p class="text-xs text-zinc-400 italic leading-relaxed">
+                  "{{ dailyQuote.text }}"
+                </p>
+                <p class="text-[10px] text-zinc-500 mt-1.5 text-right font-medium">— {{ dailyQuote.author }}</p>
+              </div>
             </div>
 
-            <!-- Link to note -->
-            <div class="w-full">
-              <label class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1.5 block">
-                Hubungkan ke Note
-              </label>
-              <select
-                id="pomo-link-note"
-                v-model="linkedNoteId"
-                class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm
-                       text-zinc-300 focus:outline-none focus:border-orange-500 transition-colors"
-              >
-                <option value="">— Tidak ada —</option>
-                <option v-for="n in notes" :key="n.id" :value="n.id">{{ n.title || 'Untitled' }}</option>
-              </select>
-            </div>
-
-            <p class="text-[10px] text-zinc-600">✓ = mock selesai (untuk tes)</p>
           </div>
 
-          <!-- Session Log -->
-          <div v-if="pomodoroLog.length > 0" class="mt-4 bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-            <p class="text-[10px] text-zinc-500 uppercase tracking-wider mb-2">🍅 Log Sesi</p>
-            <div class="space-y-1 max-h-32 overflow-y-auto">
-              <p v-for="(entry, i) in [...pomodoroLog].reverse()" :key="i"
-                 class="text-[11px] text-zinc-400 font-mono">{{ entry }}</p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -1312,6 +1426,61 @@ const navItems = [
   { name: 'Settings',  icon: Settings },
 ]
 const activeNavItem = computed(() => navItems.find(i => i.name === activeNav.value))
+
+// ─── DAILY FOCUS ──────────────────────────────────────────────────
+const dailyTasks = ref(JSON.parse(localStorage.getItem('keewrite-daily-tasks') || '[]'))
+const newDailyTaskTitle = ref('')
+
+const dailyTasksCompletedCount = computed(() =>
+  dailyTasks.value.filter(t => t.done).length
+)
+
+watch(dailyTasks, (newVal) => {
+  localStorage.setItem('keewrite-daily-tasks', JSON.stringify(newVal))
+}, { deep: true })
+
+function addDailyTask() {
+  if (!newDailyTaskTitle.value.trim()) return
+  dailyTasks.value.push({
+    id: Date.now(),
+    title: newDailyTaskTitle.value.trim(),
+    done: false
+  })
+  newDailyTaskTitle.value = ''
+}
+
+function deleteDailyTask(id) {
+  dailyTasks.value = dailyTasks.value.filter(t => t.id !== id)
+}
+
+// ─── LEETCODE & QUOTES ────────────────────────────────────────────
+const leetCodeChallenges = [
+  { title: 'Two Sum', difficulty: 'Easy', link: 'https://leetcode.com/problems/two-sum/', tagColor: '#22c55e', category: 'Array / Hash Table' },
+  { title: 'Longest Substring Without Repeating Characters', difficulty: 'Medium', link: 'https://leetcode.com/problems/longest-substring-without-repeating-characters/', tagColor: '#eab308', category: 'Sliding Window' },
+  { title: 'Median of Two Sorted Arrays', difficulty: 'Hard', link: 'https://leetcode.com/problems/median-of-two-sorted-arrays/', tagColor: '#ef4444', category: 'Binary Search' },
+  { title: 'Valid Parentheses', difficulty: 'Easy', link: 'https://leetcode.com/problems/valid-parentheses/', tagColor: '#22c55e', category: 'Stack' },
+  { title: 'Merge k Sorted Lists', difficulty: 'Hard', link: 'https://leetcode.com/problems/merge-k-sorted-lists/', tagColor: '#ef4444', category: 'Divide & Conquer' },
+  { title: 'Climbing Stairs', difficulty: 'Easy', link: 'https://leetcode.com/problems/climbing-stairs/', tagColor: '#22c55e', category: 'Dynamic Programming' },
+]
+
+const codingQuotes = [
+  { text: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
+  { text: "Programs must be written for people to read, and only incidentally for machines to execute.", author: "Harold Abelson" },
+  { text: "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.", author: "Martin Fowler" },
+  { text: "First, solve the problem. Then, write the code.", author: "John Johnson" },
+  { text: "Experience is the name everyone gives to their mistakes.", author: "Oscar Wilde" },
+  { text: "Java is to JavaScript what car is to Carpet.", author: "Chris Heilmann" },
+]
+
+const dailyLeetCode = computed(() => {
+  const index = TODAY_DAY % leetCodeChallenges.length
+  return leetCodeChallenges[index]
+})
+
+const dailyQuote = computed(() => {
+  const index = TODAY_DAY % codingQuotes.length
+  return codingQuotes[index]
+})
 
 // ─── NOTES STATE ──────────────────────────────────────────────────
 const notes      = ref([])
