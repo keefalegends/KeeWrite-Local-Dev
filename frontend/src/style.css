@@ -64,10 +64,19 @@ html, body, #app {
 [data-theme="light"] .text-zinc-100 { color: #0f172a !important; }
 [data-theme="light"] .text-zinc-200 { color: #1e293b !important; }
 [data-theme="light"] .text-zinc-300 { color: #334155 !important; }
-[data-theme="light"] .text-zinc-400 { color: #64748b !important; }
-[data-theme="light"] .text-zinc-500 { color: #94a3b8 !important; }
-[data-theme="light"] .text-zinc-600 { color: #a0aec0 !important; }
+[data-theme="light"] .text-zinc-400 { color: #475569 !important; }
+[data-theme="light"] .text-zinc-500 { color: #5f7082 !important; }
+[data-theme="light"] .text-zinc-650 { color: #5f7082 !important; }
+[data-theme="light"] .text-zinc-600 { color: #64748b !important; }
 [data-theme="light"] .text-white    { color: #0f172a !important; }
+
+/* Color overrides for high contrast in light mode */
+[data-theme="light"] .text-teal-400 { color: #0d9488 !important; }
+[data-theme="light"] .text-teal-300 { color: #0f766e !important; }
+[data-theme="light"] .text-orange-400 { color: #ea580c !important; }
+[data-theme="light"] .text-orange-300 { color: #c2410c !important; }
+[data-theme="light"] .text-violet-400 { color: #7c3aed !important; }
+[data-theme="light"] .text-violet-300 { color: #6d28d9 !important; }
 
 /* Hover states */
 [data-theme="light"] .hover\:bg-zinc-800:hover { background-color: #e2e8f0 !important; }

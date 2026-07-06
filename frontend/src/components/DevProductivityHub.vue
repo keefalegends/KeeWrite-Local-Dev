@@ -228,10 +228,7 @@
                 >
                   <option value="">— Tidak ada —</option>
                   <option v-for="n in notes" :key="n.id" :value="n.id">{{ n.title || 'Untitled' }}</option>
-                </select>
-              </div>
-
-              <p class="text-[10px] text-zinc-650">✓ = mock selesai (untuk tes)</p>
+                      <p class="text-[10px] text-zinc-500">✓ = mock selesai (untuk tes)</p>
             </div>
 
             <!-- Session Log -->
@@ -239,7 +236,7 @@
               <p class="text-[10px] text-zinc-500 uppercase tracking-wider mb-3 font-semibold">🍅 Log Sesi</p>
               <div class="space-y-2 max-h-36 overflow-y-auto">
                 <p v-for="(entry, i) in [...pomodoroLog].reverse()" :key="i"
-                   class="text-[11px] text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-850">{{ entry }}</p>
+                   class="text-[11px] text-zinc-400 font-mono bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-800">{{ entry }}</p>
               </div>
             </div>
           </div>
@@ -280,7 +277,7 @@
                 <div
                   v-for="task in dailyTasks"
                   :key="task.id"
-                  class="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-zinc-950 border border-zinc-850 hover:border-zinc-700 transition-all group"
+                  class="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-zinc-950 border border-zinc-800 hover:border-zinc-700 transition-all group"
                 >
                   <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
                     <input
@@ -290,7 +287,7 @@
                     />
                     <span
                       :class="['text-xs truncate transition-all',
-                               task.done ? 'line-through text-zinc-600 italic' : 'text-zinc-300 group-hover:text-white']"
+                               task.done ? 'line-through text-zinc-500 italic' : 'text-zinc-300 group-hover:text-white']"
                     >
                       {{ task.title }}
                     </span>
@@ -304,7 +301,7 @@
                 </div>
 
                 <!-- Empty state -->
-                <div v-if="dailyTasks.length === 0" class="text-center py-6 text-zinc-550 text-xs">
+                <div v-if="dailyTasks.length === 0" class="text-center py-6 text-zinc-500 text-xs">
                   Belum ada tugas hari ini. Mulai dengan menulis satu tugas!
                 </div>
               </div>
@@ -322,7 +319,7 @@
                 </span>
               </div>
               
-              <div class="bg-zinc-950 border border-zinc-850 rounded-xl p-4">
+              <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-4">
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
                     <h4 class="text-xs font-semibold text-zinc-100 leading-snug truncate">{{ dailyLeetCode.title }}</h4>
