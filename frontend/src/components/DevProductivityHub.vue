@@ -16,7 +16,7 @@
           <Zap :size="16" class="text-white" />
         </div>
         <div v-if="sidebarOpen" class="flex flex-col leading-tight overflow-hidden">
-          <span class="text-xs font-bold text-white tracking-widest uppercase">Dev Hub</span>
+          <span class="text-xs font-bold text-white tracking-widest uppercase">KeeWrite</span>
           <span class="text-[9px] text-zinc-500 tracking-wider">Productivity Suite</span>
         </div>
         <button
