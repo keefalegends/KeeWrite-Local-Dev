@@ -7,10 +7,17 @@
   --font-mono: 'Fira Code', monospace;
 }
 
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar       { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #18181b; }
-::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+::-webkit-scrollbar-track { background: var(--scroll-track, #18181b); }
+::-webkit-scrollbar-thumb { background: var(--scroll-thumb, #3f3f46); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #14b8a6; }
 
 /* ── Pomodoro glow ── */
@@ -27,11 +34,67 @@
 }
 .animate-fadeIn { animation: fadeIn 0.2s ease-out; }
 
-html, body, #app {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  font-family: 'Inter', sans-serif;
-  background: #09090b;
-  color: #f4f4f5;
+/* ══════════════════════════════════════════════
+   LIGHT MODE OVERRIDES
+   data-theme="light" pada root div
+══════════════════════════════════════════════ */
+[data-theme="light"] {
+  --scroll-track: #e2e8f0;
+  --scroll-thumb: #94a3b8;
+  color-scheme: light;
 }
+
+/* Backgrounds */
+[data-theme="light"] .bg-zinc-950  { background-color: #f1f5f9 !important; }
+[data-theme="light"] .bg-zinc-900  { background-color: #ffffff !important; }
+[data-theme="light"] .bg-zinc-800  { background-color: #e2e8f0 !important; }
+[data-theme="light"] .bg-zinc-700  { background-color: #cbd5e1 !important; }
+
+/* Background with opacity — override via filter */
+[data-theme="light"] .bg-zinc-950\/60 { background-color: rgba(248,250,252,0.8) !important; }
+[data-theme="light"] .bg-zinc-900\/50 { background-color: rgba(241,245,249,0.9) !important; }
+[data-theme="light"] .bg-zinc-800\/60 { background-color: rgba(226,232,240,0.7) !important; }
+[data-theme="light"] .bg-zinc-800\/50 { background-color: rgba(226,232,240,0.5) !important; }
+
+/* Borders */
+[data-theme="light"] .border-zinc-800 { border-color: #e2e8f0 !important; }
+[data-theme="light"] .border-zinc-700 { border-color: #cbd5e1 !important; }
+
+/* Text colors */
+[data-theme="light"] .text-zinc-100 { color: #0f172a !important; }
+[data-theme="light"] .text-zinc-200 { color: #1e293b !important; }
+[data-theme="light"] .text-zinc-300 { color: #334155 !important; }
+[data-theme="light"] .text-zinc-400 { color: #64748b !important; }
+[data-theme="light"] .text-zinc-500 { color: #94a3b8 !important; }
+[data-theme="light"] .text-zinc-600 { color: #a0aec0 !important; }
+[data-theme="light"] .text-white    { color: #0f172a !important; }
+
+/* Hover states */
+[data-theme="light"] .hover\:bg-zinc-800:hover { background-color: #e2e8f0 !important; }
+[data-theme="light"] .hover\:bg-zinc-700:hover { background-color: #cbd5e1 !important; }
+[data-theme="light"] .hover\:text-zinc-200:hover { color: #1e293b !important; }
+[data-theme="light"] .hover\:text-white:hover { color: #0f172a !important; }
+
+/* Active nav */
+[data-theme="light"] .bg-teal-500\/15 { background-color: rgba(20,184,166,0.12) !important; }
+
+/* Input & textarea */
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background-color: transparent !important;
+  color: #1e293b !important;
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder { color: #94a3b8 !important; }
+
+/* Select dropdown */
+[data-theme="light"] select { background-color: #e2e8f0 !important; }
+
+/* Markdown preview text in light mode */
+[data-theme="light"] .flex-1.overflow-y-auto p,
+[data-theme="light"] .flex-1.overflow-y-auto li,
+[data-theme="light"] .flex-1.overflow-y-auto blockquote { color: #334155 !important; }
+
+/* Code blocks in light mode */
+[data-theme="light"] pre { background: #f8fafc !important; border-color: #e2e8f0 !important; }

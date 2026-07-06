@@ -1,5 +1,8 @@
 <template>
-  <div class="flex h-screen bg-zinc-950 text-zinc-100 font-sans antialiased overflow-hidden select-none">
+  <div
+    :data-theme="isDark ? 'dark' : 'light'"
+    class="flex h-screen bg-zinc-950 text-zinc-100 font-sans antialiased overflow-hidden select-none"
+  >
 
     <!-- ═══ LEFT SIDEBAR ═══ -->
     <aside
@@ -433,7 +436,133 @@
         </template>
       </template>
 
-      <!-- ── VIEW: PROJECTS / SETTINGS (placeholder) ── -->
+      <!-- ── VIEW: SETTINGS ── -->
+      <div v-else-if="activeNav === 'Settings'" class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-lg mx-auto">
+          <!-- Title -->
+          <div class="flex items-center gap-3 mb-8">
+            <div class="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center">
+              <Settings :size="20" class="text-zinc-400" />
+            </div>
+            <div>
+              <h1 class="text-lg font-bold text-white">Settings</h1>
+              <p class="text-xs text-zinc-500">Konfigurasi tampilan & preferensi</p>
+            </div>
+          </div>
+
+          <!-- Appearance Card -->
+          <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl mb-4">
+            <div class="px-5 py-3 border-b border-zinc-800">
+              <p class="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Tampilan</p>
+            </div>
+
+            <!-- Theme toggle -->
+            <div class="p-5">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div :class="['w-9 h-9 rounded-xl flex items-center justify-center transition-colors',
+                               isDark ? 'bg-zinc-800' : 'bg-amber-100']">
+                    <Moon v-if="isDark" :size="18" class="text-teal-400" />
+                    <Sun  v-else       :size="18" class="text-amber-500" />
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-zinc-200">Mode Tampilan</p>
+                    <p class="text-xs text-zinc-500 mt-0.5">
+                      {{ isDark ? 'Dark Mode — latar gelap, nyaman di malam hari' : 'Light Mode — latar terang, nyaman di siang hari' }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Toggle switch -->
+                <button
+                  id="theme-toggle"
+                  @click="toggleTheme"
+                  :class="['relative inline-flex w-14 h-7 items-center rounded-full transition-colors duration-300 focus:outline-none flex-shrink-0',
+                           isDark ? 'bg-teal-600' : 'bg-amber-400']">
+                  <span
+                    :class="['absolute w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300',
+                             isDark ? 'translate-x-1' : 'translate-x-8']"
+                  />
+                </button>
+              </div>
+
+              <!-- Mode preview chips -->
+              <div class="flex gap-2 mt-5">
+                <button
+                  @click="setTheme(true)"
+                  :class="['flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-xs font-medium transition-all',
+                           isDark
+                             ? 'bg-teal-500/15 border-teal-500/50 text-teal-400'
+                             : 'border-zinc-700 text-zinc-500 hover:border-zinc-600']">
+                  <Moon :size="14" />
+                  Dark Mode
+                  <span v-if="isDark" class="ml-1 text-[9px] bg-teal-500/30 text-teal-300 px-1.5 py-0.5 rounded-full">Aktif</span>
+                </button>
+                <button
+                  @click="setTheme(false)"
+                  :class="['flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-xs font-medium transition-all',
+                           !isDark
+                             ? 'bg-amber-400/15 border-amber-400/50 text-amber-500'
+                             : 'border-zinc-700 text-zinc-500 hover:border-zinc-600']">
+                  <Sun :size="14" />
+                  Light Mode
+                  <span v-if="!isDark" class="ml-1 text-[9px] bg-amber-400/30 text-amber-600 px-1.5 py-0.5 rounded-full">Aktif</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Editor Card -->
+          <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl mb-4">
+            <div class="px-5 py-3 border-b border-zinc-800">
+              <p class="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Editor</p>
+            </div>
+            <div class="p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-zinc-200">Default View</p>
+                  <p class="text-xs text-zinc-500 mt-0.5">Tampilan awal editor saat membuka note</p>
+                </div>
+                <select
+                  v-model="editorView"
+                  class="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-zinc-300
+                         focus:outline-none focus:border-teal-500 cursor-pointer">
+                  <option value="editor">Kode</option>
+                  <option value="split">Split</option>
+                  <option value="preview">Preview</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- About Card -->
+          <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
+            <div class="px-5 py-3 border-b border-zinc-800">
+              <p class="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">Tentang</p>
+            </div>
+            <div class="p-5 space-y-2 text-sm text-zinc-400">
+              <div class="flex justify-between">
+                <span>Aplikasi</span>
+                <span class="text-zinc-300 font-medium">KeeWrite Dev Hub</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Versi</span>
+                <span class="text-zinc-300 font-mono">1.0.0</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Backend</span>
+                <span class="text-zinc-300">Laravel 13 + SQLite</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Frontend</span>
+                <span class="text-zinc-300">Vue 3 + Vite + Tailwind</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VIEW: PROJECTS (placeholder) ── -->
       <div v-else class="flex-1 flex flex-col items-center justify-center text-zinc-600">
         <component :is="activeNavItem?.icon" :size="48" class="mb-4 opacity-20" />
         <p class="text-sm font-medium">{{ activeNav }}</p>
@@ -452,6 +581,7 @@ import {
   LayoutDashboard, FileText, FolderKanban, Calendar as CalendarIcon, Settings,
   Plus, Trash2, CalendarDays, Clock, RefreshCw, CalendarCheck,
   Save, CheckCircle, Code2, Eye, Timer, RotateCcw, Pause, Play, WifiOff,
+  Moon, Sun,
 } from '@lucide/vue'
 
 // ─── CONSTANTS ────────────────────────────────────────────────────
@@ -460,6 +590,19 @@ const circumference    = 2 * Math.PI * 54   // ring kecil (sidebar)
 const circumferenceLarge = 2 * Math.PI * 70 // ring besar (dashboard)
 const TODAY_DAY        = new Date().getDate()
 const leadingBlanks    = new Date(2026, 6, 1).getDay() // Juli 2026 = Rabu = 3
+
+// ─── THEME ────────────────────────────────────────────────────────
+const isDark = ref(localStorage.getItem('keewrite-theme') !== 'light')
+
+function toggleTheme() {
+  isDark.value = !isDark.value
+  localStorage.setItem('keewrite-theme', isDark.value ? 'dark' : 'light')
+}
+
+function setTheme(dark) {
+  isDark.value = dark
+  localStorage.setItem('keewrite-theme', dark ? 'dark' : 'light')
+}
 
 // ─── NAVIGATION ───────────────────────────────────────────────────
 const sidebarOpen = ref(true)
