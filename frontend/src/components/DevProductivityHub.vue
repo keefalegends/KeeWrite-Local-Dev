@@ -894,10 +894,11 @@
           </div>
 
           <!-- Main content: Kanban + Bookmarks -->
-          <div class="flex-1 flex min-h-0 overflow-hidden">
+          <div class="flex-1 flex min-h-0" style="overflow:hidden">
 
             <!-- Kanban Board -->
-            <div class="flex-1 flex gap-4 p-6 overflow-x-auto overflow-y-hidden">
+            <div class="flex-1 overflow-x-auto overflow-y-hidden p-6">
+              <div class="flex gap-4 h-full" style="min-width:max-content">
 
               <!-- Kanban Column -->
               <div
@@ -973,10 +974,11 @@
                     Tidak ada task
                   </div>
                 </div>
-              </div>
-            </div>
+              </div><!-- end inner kanban wrapper -->
+            </div><!-- end kanban scroll area -->
 
             <!-- Resource Bookmarks sidebar -->
+
             <div class="flex-shrink-0 w-64 flex flex-col border-l border-zinc-800 overflow-hidden">
               <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800 flex-shrink-0">
                 <div class="flex items-center gap-2">
