@@ -884,12 +884,26 @@
                 {{ tag }}
               </span>
             </div>
-            <div class="ml-auto flex items-center gap-2">
+            <div class="ml-auto flex items-center gap-3">
               <span class="text-xs text-zinc-500 font-mono">{{ projectProgress(activeProject) }}% selesai</span>
               <div class="w-20 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                 <div class="h-full rounded-full transition-all"
                      :style="{width: projectProgress(activeProject) + '%', background: activeProject.color}" />
               </div>
+              <!-- Resources toggle -->
+              <button
+                @click="showResources = !showResources"
+                :class="['flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all',
+                         showResources
+                           ? 'bg-orange-500/15 border-orange-500/40 text-orange-400'
+                           : 'border-zinc-700 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300']"
+              >
+                <Bookmark :size="12" />
+                Resources
+                <span :class="['text-[10px] transition-transform duration-200', showResources ? 'rotate-180' : '']">
+                  ▼
+                </span>
+              </button>
             </div>
           </div>
 
@@ -979,9 +993,10 @@
             </div><!-- end kanban scroll area -->
 
 
-            <!-- Resource Bookmarks sidebar -->
-
-            <div class="flex-shrink-0 w-64 flex flex-col border-l border-zinc-800 overflow-hidden">
+            <!-- Resource Bookmarks sidebar (collapsible) -->
+            <Transition name="resources-slide">
+              <div v-if="showResources"
+                   class="flex-shrink-0 w-64 flex flex-col border-l border-zinc-800 overflow-hidden">
               <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800 flex-shrink-0">
                 <div class="flex items-center gap-2">
                   <Bookmark :size="13" class="text-orange-400" />
@@ -1044,10 +1059,11 @@
                                text-xs transition-all">
                   <Plus :size="12" /> Tambah Resource
                 </button>
-              </div>
-            </div>
-          </div>
-        </div>
+              </div><!-- add bookmark bar -->
+            </div><!-- resources sidebar -->
+            </Transition><!-- /resources-slide -->
+          </div><!-- /kanban + resources row -->
+        </div><!-- /detail state -->
 
         <!-- ── NEW PROJECT MODAL ── -->
         <Transition name="modal">
@@ -1588,6 +1604,7 @@ function deleteTask(taskId) {
 }
 
 // Bookmarks
+const showResources    = ref(false)
 const showBookmarkForm = ref(false)
 const bmTitle = ref('')
 const bmUrl   = ref('')

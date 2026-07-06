@@ -107,3 +107,17 @@ html, body, #app {
 .modal-enter-from .relative,
 .modal-leave-to   .relative   { transform: scale(0.95) translateY(8px); opacity: 0; }
 
+/* ── Resources sidebar slide transition ── */
+.resources-slide-enter-active, .resources-slide-leave-active {
+  transition: width 0.25s ease, opacity 0.25s ease;
+  overflow: hidden;
+}
+.resources-slide-enter-from, .resources-slide-leave-to {
+  width: 0 !important;
+  opacity: 0;
+}
+.resources-slide-enter-to, .resources-slide-leave-from {
+  width: 16rem; /* w-64 */
+  opacity: 1;
+}
+
