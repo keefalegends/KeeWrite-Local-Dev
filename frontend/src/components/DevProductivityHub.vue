@@ -674,6 +674,14 @@
               <!-- Footer -->
               <div class="flex gap-2 px-5 pb-5">
                 <button
+                  v-if="modalHasExistingDeadline"
+                  @click="deleteDeadlineFromModal"
+                  :disabled="isSavingDeadline"
+                  class="px-4 py-2.5 rounded-xl border border-red-500/25 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium transition-all"
+                >
+                  Hapus
+                </button>
+                <button
                   @click="closeDeadlineModal"
                   class="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm
                          hover:bg-zinc-800 hover:text-zinc-200 transition-all"
@@ -1805,7 +1813,50 @@ async function saveDeadlineFromModal() {
   } finally {
     isSavingDeadline.value = false
   }
+
+const modalHasExistingDeadline = computed(() => {
+  if (modalTargetType.value === 'note') {
+    if (!modalNoteId.value) return false
+    const note = notes.value.find(n => n.id == modalNoteId.value)
+    return !!note?.deadline_at
+  } else {
+    if (!modalProjectId.value) return false
+    const proj = projects.value.find(p => p.id == modalProjectId.value)
+    return !!proj?.deadline_at
+  }
+})
+
+async function deleteDeadlineFromModal() {
+  isSavingDeadline.value = true
+  try {
+    if (modalTargetType.value === 'note') {
+      if (!modalNoteId.value) return
+      const response = await axios.put(`/api/notes/${modalNoteId.value}`, {
+        deadline_at: null,
+      })
+      const updated = response.data.data
+      const idx = notes.value.findIndex(n => n.id == modalNoteId.value)
+      if (idx !== -1) notes.value[idx].deadline_at = updated.deadline_at
+
+      // Clear description
+      delete noteDeadlineDescriptions.value[modalNoteId.value]
+      noteDeadlineDescriptions.value = { ...noteDeadlineDescriptions.value }
+    } else {
+      if (!modalProjectId.value) return
+      const proj = projects.value.find(p => p.id == modalProjectId.value)
+      if (proj) {
+        proj.deadline_at = null
+        proj.deadline_note = ''
+      }
+    }
+    closeDeadlineModal()
+  } catch (err) {
+    console.error('[DevHub] Gagal menghapus deadline:', err)
+  } finally {
+    isSavingDeadline.value = false
+  }
 }
+
 
 
 // ─── PROJECTS ─────────────────────────────────────────────────────
