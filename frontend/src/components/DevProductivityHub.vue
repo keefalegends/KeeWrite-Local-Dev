@@ -973,9 +973,11 @@
                        class="text-center py-8 text-zinc-700 text-xs">
                     Tidak ada task
                   </div>
-                </div>
-              </div><!-- end inner kanban wrapper -->
+                </div><!-- end task list -->
+              </div><!-- end kanban column -->
+              </div><!-- end inner flex wrapper -->
             </div><!-- end kanban scroll area -->
+
 
             <!-- Resource Bookmarks sidebar -->
 
