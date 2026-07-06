@@ -228,7 +228,9 @@
                 >
                   <option value="">— Tidak ada —</option>
                   <option v-for="n in notes" :key="n.id" :value="n.id">{{ n.title || 'Untitled' }}</option>
-                      <p class="text-[10px] text-zinc-500">✓ = mock selesai (untuk tes)</p>
+                </select>
+                <p class="text-[10px] text-zinc-500">✓ = mock selesai (untuk tes)</p>
+              </div>
             </div>
 
             <!-- Session Log -->
