@@ -740,7 +740,426 @@
         </div>
       </div>
 
-      <!-- ── VIEW: PROJECTS (placeholder) ── -->
+      <!-- ── VIEW: PROJECTS ── -->
+      <div v-else-if="activeNav === 'Projects'" class="flex-1 flex flex-col min-h-0 overflow-hidden">
+
+        <!-- ── STATE 1: Project List ── -->
+        <div v-if="!activeProject" class="flex-1 overflow-y-auto p-8">
+
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center">
+                <FolderKanban :size="20" class="text-teal-400" />
+              </div>
+              <div>
+                <h1 class="text-lg font-bold text-white">Projects</h1>
+                <p class="text-xs text-zinc-500">{{ projects.length }} proyek aktif</p>
+              </div>
+            </div>
+            <button
+              id="new-project-btn"
+              @click="showNewProjectModal = true"
+              class="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white
+                     rounded-xl text-sm font-medium transition-all shadow-lg shadow-teal-900/30"
+            >
+              <Plus :size="16" />
+              New Project
+            </button>
+          </div>
+
+          <!-- Project Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div
+              v-for="proj in projects"
+              :key="proj.id"
+              @click="openProject(proj.id)"
+              class="group bg-zinc-900 border border-zinc-800 rounded-2xl p-5 cursor-pointer
+                     hover:border-zinc-600 hover:shadow-xl transition-all animate-fadeIn relative overflow-hidden"
+            >
+              <!-- Top color bar -->
+              <div class="absolute top-0 left-0 right-0 h-0.5" :style="{background: proj.color}" />
+
+              <!-- Header -->
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
+                       :style="{background: proj.color + '22'}">{{ proj.emoji }}</div>
+                  <div>
+                    <h3 class="text-sm font-bold text-white group-hover:text-teal-300 transition-colors">
+                      {{ proj.name }}
+                    </h3>
+                    <p class="text-[10px] text-zinc-500 mt-0.5">
+                      {{ doneTasks(proj) }}/{{ proj.tasks.length }} tasks selesai
+                    </p>
+                  </div>
+                </div>
+                <!-- Quick links -->
+                <div class="flex gap-1" @click.stop>
+                  <a v-if="proj.githubUrl" :href="proj.githubUrl" target="_blank"
+                     class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center
+                            text-zinc-500 hover:text-white transition-all"
+                     title="GitHub">
+                    <Github :size="13" />
+                  </a>
+                  <a v-if="proj.figmaUrl" :href="proj.figmaUrl" target="_blank"
+                     class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-purple-500/30 flex items-center justify-center
+                            text-zinc-500 hover:text-purple-400 transition-all"
+                     title="Figma">
+                    <Figma :size="13" />
+                  </a>
+                  <button @click.stop="deleteProject(proj.id)"
+                          class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-red-500/20 flex items-center justify-center
+                                 text-zinc-600 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100">
+                    <Trash2 :size="12" />
+                  </button>
+                </div>
+              </div>
+
+              <!-- Description -->
+              <p class="text-xs text-zinc-500 mb-4 line-clamp-2 leading-relaxed">{{ proj.description }}</p>
+
+              <!-- Tech tags -->
+              <div class="flex flex-wrap gap-1 mb-4">
+                <span v-for="tag in proj.tech" :key="tag"
+                      class="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 font-mono border border-zinc-700">
+                  {{ tag }}
+                </span>
+              </div>
+
+              <!-- Progress bar -->
+              <div>
+                <div class="flex justify-between items-center mb-1.5">
+                  <span class="text-[10px] text-zinc-500">Progress</span>
+                  <span class="text-[10px] font-mono" :style="{color: proj.color}">
+                    {{ projectProgress(proj) }}%
+                  </span>
+                </div>
+                <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                  <div
+                    class="h-full rounded-full transition-all duration-500"
+                    :style="{width: projectProgress(proj) + '%', background: proj.color}"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Add new card -->
+            <div
+              @click="showNewProjectModal = true"
+              class="border-2 border-dashed border-zinc-800 rounded-2xl p-5 flex flex-col items-center
+                     justify-center gap-3 cursor-pointer hover:border-teal-500/50 hover:bg-teal-500/5
+                     transition-all text-zinc-600 hover:text-teal-400 group min-h-[200px]"
+            >
+              <div class="w-10 h-10 rounded-xl bg-zinc-800 group-hover:bg-teal-500/20 flex items-center
+                          justify-center transition-colors">
+                <Plus :size="20" />
+              </div>
+              <p class="text-sm font-medium">Tambah Project</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── STATE 2: Project Detail (Kanban) ── -->
+        <div v-else class="flex-1 flex flex-col min-h-0 overflow-hidden">
+
+          <!-- Detail header -->
+          <div class="flex-shrink-0 flex items-center gap-4 px-6 py-4 border-b border-zinc-800">
+            <button
+              @click="activeProject = null"
+              class="flex items-center gap-2 text-xs text-zinc-500 hover:text-white px-3 py-1.5
+                     rounded-lg hover:bg-zinc-800 transition-all"
+            >
+              <ArrowLeft :size="14" />
+              Kembali
+            </button>
+            <div class="h-5 w-px bg-zinc-800" />
+            <span class="text-lg font-bold text-white flex items-center gap-2">
+              <span>{{ activeProject.emoji }}</span>
+              {{ activeProject.name }}
+            </span>
+            <div class="flex flex-wrap gap-1 ml-2">
+              <span v-for="tag in activeProject.tech" :key="tag"
+                    class="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 font-mono">
+                {{ tag }}
+              </span>
+            </div>
+            <div class="ml-auto flex items-center gap-2">
+              <span class="text-xs text-zinc-500 font-mono">{{ projectProgress(activeProject) }}% selesai</span>
+              <div class="w-20 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all"
+                     :style="{width: projectProgress(activeProject) + '%', background: activeProject.color}" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Main content: Kanban + Bookmarks -->
+          <div class="flex-1 flex min-h-0 overflow-hidden">
+
+            <!-- Kanban Board -->
+            <div class="flex-1 flex gap-4 p-6 overflow-x-auto overflow-y-hidden">
+
+              <!-- Kanban Column -->
+              <div
+                v-for="col in kanbanCols"
+                :key="col.id"
+                class="flex-shrink-0 w-72 flex flex-col bg-zinc-900/70 border border-zinc-800
+                       rounded-2xl overflow-hidden"
+              >
+                <!-- Column header -->
+                <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full" :style="{background: col.color}" />
+                    <span class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">{{ col.label }}</span>
+                    <span class="text-[10px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded-full">
+                      {{ tasksInCol(col.id).length }}
+                    </span>
+                  </div>
+                  <button
+                    @click="addTask(col.id)"
+                    class="w-6 h-6 rounded-md bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center
+                           text-zinc-500 hover:text-white transition-colors"
+                  >
+                    <Plus :size="12" />
+                  </button>
+                </div>
+
+                <!-- Task cards -->
+                <div class="flex-1 overflow-y-auto p-3 space-y-2">
+                  <div
+                    v-for="task in tasksInCol(col.id)"
+                    :key="task.id"
+                    class="group bg-zinc-900 border border-zinc-800 hover:border-zinc-600 rounded-xl p-3
+                           transition-all cursor-pointer animate-fadeIn"
+                  >
+                    <!-- Priority badge -->
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                      <span
+                        :class="['text-[9px] px-1.5 py-0.5 rounded-full font-semibold uppercase tracking-wider',
+                                 task.priority === 'high'   ? 'bg-red-500/20 text-red-400' :
+                                 task.priority === 'medium' ? 'bg-orange-500/20 text-orange-400' :
+                                                              'bg-zinc-700 text-zinc-400']"
+                      >{{ task.priority }}</span>
+                      <button
+                        @click="deleteTask(task.id)"
+                        class="opacity-0 group-hover:opacity-100 w-5 h-5 rounded flex items-center justify-center
+                               text-zinc-600 hover:text-red-400 transition-all"
+                      >
+                        <X :size="11" />
+                      </button>
+                    </div>
+
+                    <p class="text-xs font-medium text-zinc-200 leading-snug mb-3">{{ task.title }}</p>
+
+                    <!-- Move buttons -->
+                    <div class="flex gap-1">
+                      <button
+                        v-for="mv in movesFor(task)"
+                        :key="mv.to"
+                        @click="moveTask(task.id, mv.to)"
+                        :class="['flex-1 text-[9px] py-1 rounded-lg border font-medium transition-all',
+                                 mv.to === 'done'
+                                   ? 'border-teal-500/40 text-teal-400 hover:bg-teal-500/15'
+                                   : mv.to === 'in-progress'
+                                     ? 'border-orange-500/40 text-orange-400 hover:bg-orange-500/15'
+                                     : 'border-zinc-600 text-zinc-500 hover:bg-zinc-800']"
+                      >{{ mv.label }}</button>
+                    </div>
+                  </div>
+
+                  <!-- Empty state -->
+                  <div v-if="tasksInCol(col.id).length === 0"
+                       class="text-center py-8 text-zinc-700 text-xs">
+                    Tidak ada task
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resource Bookmarks sidebar -->
+            <div class="flex-shrink-0 w-64 flex flex-col border-l border-zinc-800 overflow-hidden">
+              <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800 flex-shrink-0">
+                <div class="flex items-center gap-2">
+                  <Bookmark :size="13" class="text-orange-400" />
+                  <span class="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Resources</span>
+                </div>
+              </div>
+
+              <div class="flex-1 overflow-y-auto p-3 space-y-2">
+                <a
+                  v-for="bm in activeProject.bookmarks"
+                  :key="bm.id"
+                  :href="bm.url"
+                  target="_blank"
+                  class="group flex items-center gap-2 p-2.5 rounded-xl bg-zinc-900 border border-zinc-800
+                         hover:border-orange-500/40 hover:bg-orange-500/5 transition-all block"
+                  @click.right.prevent="deleteBookmark(bm.id)"
+                >
+                  <div class="w-7 h-7 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                    <Link2 :size="12" class="text-orange-400" />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium text-zinc-300 group-hover:text-orange-300 truncate transition-colors">
+                      {{ bm.title }}
+                    </p>
+                    <p class="text-[10px] text-zinc-600 truncate">{{ bm.url.replace('https://','') }}</p>
+                  </div>
+                  <ExternalLink :size="11" class="text-zinc-600 group-hover:text-orange-400 flex-shrink-0" />
+                </a>
+
+                <div v-if="activeProject.bookmarks.length === 0"
+                     class="text-center py-6 text-zinc-700 text-xs">
+                  Belum ada resource
+                </div>
+              </div>
+
+              <!-- Add bookmark -->
+              <div class="flex-shrink-0 p-3 border-t border-zinc-800">
+                <div v-if="showBookmarkForm" class="space-y-2">
+                  <input v-model="bmTitle" placeholder="Nama resource..."
+                         class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-xs
+                                text-zinc-200 focus:outline-none focus:border-orange-500 placeholder-zinc-600" />
+                  <input v-model="bmUrl" placeholder="https://..."
+                         class="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-xs
+                                text-zinc-200 focus:outline-none focus:border-orange-500 placeholder-zinc-600" />
+                  <div class="flex gap-2">
+                    <button @click="addBookmark"
+                            class="flex-1 py-1.5 bg-orange-500 hover:bg-orange-400 text-white rounded-lg text-xs font-medium transition-colors">
+                      Simpan
+                    </button>
+                    <button @click="showBookmarkForm = false; bmTitle = ''; bmUrl = ''"
+                            class="flex-1 py-1.5 border border-zinc-700 text-zinc-400 hover:text-zinc-200 rounded-lg text-xs transition-colors">
+                      Batal
+                    </button>
+                  </div>
+                </div>
+                <button v-else
+                        @click="showBookmarkForm = true"
+                        class="w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-dashed
+                               border-zinc-700 text-zinc-600 hover:border-orange-500/50 hover:text-orange-400
+                               text-xs transition-all">
+                  <Plus :size="12" /> Tambah Resource
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── NEW PROJECT MODAL ── -->
+        <Transition name="modal">
+          <div v-if="showNewProjectModal"
+               class="fixed inset-0 z-50 flex items-center justify-center"
+               @click.self="showNewProjectModal = false">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div class="relative w-full max-w-md mx-4 bg-zinc-900 border border-zinc-700 rounded-2xl
+                        shadow-2xl overflow-hidden animate-fadeIn">
+
+              <!-- Modal header -->
+              <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-zinc-800">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-teal-500/20 flex items-center justify-center">
+                    <FolderKanban :size="18" class="text-teal-400" />
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-white">New Project</p>
+                    <p class="text-[11px] text-zinc-500">Buat proyek baru</p>
+                  </div>
+                </div>
+                <button @click="showNewProjectModal = false"
+                        class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center
+                               text-zinc-400 hover:text-white transition-colors">
+                  <X :size="14" />
+                </button>
+              </div>
+
+              <!-- Modal body -->
+              <div class="px-5 py-4 space-y-4">
+                <!-- Emoji + Name -->
+                <div class="flex gap-3">
+                  <div>
+                    <label class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Ikon</label>
+                    <input v-model="newProj.emoji"
+                           class="w-14 h-10 bg-zinc-800 border border-zinc-700 rounded-xl text-center text-xl
+                                  focus:outline-none focus:border-teal-500" />
+                  </div>
+                  <div class="flex-1">
+                    <label class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Nama Project</label>
+                    <input v-model="newProj.name" placeholder="My Awesome Project"
+                           class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm
+                                  text-zinc-200 focus:outline-none focus:border-teal-500 placeholder-zinc-600" />
+                  </div>
+                </div>
+
+                <!-- Description -->
+                <div>
+                  <label class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Deskripsi</label>
+                  <textarea v-model="newProj.description" placeholder="Deskripsi singkat proyek..."
+                            rows="2"
+                            class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm
+                                   text-zinc-200 focus:outline-none focus:border-teal-500 placeholder-zinc-600 resize-none" />
+                </div>
+
+                <!-- Tech tags -->
+                <div>
+                  <label class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Tech Stack (pisahkan koma)</label>
+                  <input v-model="newProj.techStr" placeholder="Vue, Laravel, Tailwind"
+                         class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm
+                                text-zinc-200 focus:outline-none focus:border-teal-500 placeholder-zinc-600" />
+                </div>
+
+                <!-- Links -->
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">GitHub URL</label>
+                    <input v-model="newProj.githubUrl" placeholder="https://github.com/..."
+                           class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-xs
+                                  text-zinc-200 focus:outline-none focus:border-teal-500 placeholder-zinc-600" />
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Figma URL</label>
+                    <input v-model="newProj.figmaUrl" placeholder="https://figma.com/..."
+                           class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-xs
+                                  text-zinc-200 focus:outline-none focus:border-teal-500 placeholder-zinc-600" />
+                  </div>
+                </div>
+
+                <!-- Color picker -->
+                <div>
+                  <label class="text-[10px] text-zinc-500 uppercase tracking-wider mb-2 block">Warna Aksen</label>
+                  <div class="flex gap-2">
+                    <button
+                      v-for="c in accentColors"
+                      :key="c"
+                      @click="newProj.color = c"
+                      :style="{background: c}"
+                      :class="['w-7 h-7 rounded-lg transition-transform', newProj.color === c ? 'scale-125 ring-2 ring-white/30' : 'hover:scale-110']"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal footer -->
+              <div class="flex gap-2 px-5 pb-5">
+                <button @click="showNewProjectModal = false"
+                        class="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm
+                               hover:bg-zinc-800 transition-all">
+                  Batal
+                </button>
+                <button
+                  @click="createProject"
+                  :disabled="!newProj.name.trim()"
+                  class="flex-1 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-white text-sm font-medium
+                         transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Buat Project
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </div>
+
+      <!-- ── VIEW: OTHER (placeholder) ── -->
       <div v-else class="flex-1 flex flex-col items-center justify-center text-zinc-600">
         <component :is="activeNavItem?.icon" :size="48" class="mb-4 opacity-20" />
         <p class="text-sm font-medium">{{ activeNav }}</p>
@@ -760,6 +1179,7 @@ import {
   Plus, Trash2, CalendarDays, Clock, RefreshCw, CalendarCheck,
   Save, CheckCircle, Code2, Eye, Timer, RotateCcw, Pause, Play, WifiOff,
   Moon, Sun, ChevronLeft, ChevronRight, X, Pencil,
+  Github, Figma, ArrowLeft, Bookmark, Link2, ExternalLink,
 } from '@lucide/vue'
 
 // ─── CONSTANTS ────────────────────────────────────────────────────
@@ -1031,7 +1451,189 @@ async function saveDeadlineFromModal() {
   }
 }
 
+// ─── PROJECTS ─────────────────────────────────────────────────────
+const accentColors = ['#14b8a6','#f97316','#6366f1','#ec4899','#eab308','#3b82f6','#a855f7','#22c55e']
+
+let _taskId = 100
+function mkTask(title, status, priority = 'medium') {
+  return { id: _taskId++, title, status, priority }
+}
+
+const projects = ref([
+  {
+    id: 1,
+    name: 'KeeWrite Dev Hub',
+    description: 'Full-stack productivity app dengan Note Editor, Pomodoro Timer, Kanban Board, dan Kalender Deadline.',
+    emoji: '⚡',
+    color: '#14b8a6',
+    tech: ['Vue 3', 'Laravel', 'SQLite', 'Tailwind'],
+    githubUrl: 'https://github.com/keefalegends/KeeWrite',
+    figmaUrl: '',
+    tasks: [
+      mkTask('Setup Laravel API + CRUD Notes', 'done', 'high'),
+      mkTask('Build Vue 3 komponen utama', 'done', 'high'),
+      mkTask('Pomodoro Timer dengan ring SVG', 'done', 'medium'),
+      mkTask('Kalender interaktif + deadline modal', 'done', 'medium'),
+      mkTask('Dark / Light mode toggle', 'done', 'low'),
+      mkTask('Kanban Board di Projects', 'in-progress', 'high'),
+      mkTask('Export notes ke Markdown file', 'todo', 'medium'),
+      mkTask('Deploy ke production server', 'todo', 'low'),
+    ],
+    bookmarks: [
+      { id: 1, title: 'Laravel Docs', url: 'https://laravel.com/docs' },
+      { id: 2, title: 'Vue 3 Composition API', url: 'https://vuejs.org/guide/extras/composition-api-faq.html' },
+      { id: 3, title: 'Tailwind CSS v4', url: 'https://tailwindcss.com/docs' },
+    ],
+  },
+  {
+    id: 2,
+    name: 'E-Commerce App',
+    description: 'Platform belanja online dengan fitur cart, checkout, payment gateway, dan admin dashboard.',
+    emoji: '🛒',
+    color: '#f97316',
+    tech: ['Next.js', 'Node.js', 'PostgreSQL', 'Stripe'],
+    githubUrl: '',
+    figmaUrl: '',
+    tasks: [
+      mkTask('Setup Next.js + TypeScript', 'done', 'high'),
+      mkTask('Desain UI Product listing', 'done', 'medium'),
+      mkTask('Integrasi Stripe Payment', 'in-progress', 'high'),
+      mkTask('Admin dashboard & analytics', 'todo', 'medium'),
+      mkTask('SEO optimization', 'todo', 'low'),
+    ],
+    bookmarks: [
+      { id: 10, title: 'Stripe Docs', url: 'https://stripe.com/docs' },
+      { id: 11, title: 'Next.js App Router', url: 'https://nextjs.org/docs/app' },
+    ],
+  },
+  {
+    id: 3,
+    name: 'Portfolio Website',
+    description: 'Personal portfolio developer dengan animasi modern, showcase project, dan blog teknis.',
+    emoji: '🎨',
+    color: '#6366f1',
+    tech: ['Astro', 'React', 'Framer Motion', 'MDX'],
+    githubUrl: '',
+    figmaUrl: '',
+    tasks: [
+      mkTask('Wireframe & design system', 'done', 'high'),
+      mkTask('Landing page hero section', 'in-progress', 'high'),
+      mkTask('Halaman Projects showcase', 'in-progress', 'medium'),
+      mkTask('Blog dengan MDX support', 'todo', 'medium'),
+      mkTask('Deploy ke Vercel', 'todo', 'low'),
+    ],
+    bookmarks: [
+      { id: 20, title: 'Astro Docs', url: 'https://docs.astro.build' },
+      { id: 21, title: 'Framer Motion', url: 'https://www.framer.com/motion/' },
+    ],
+  },
+])
+
+const activeProject = ref(null)
+
+// Kanban columns config
+const kanbanCols = [
+  { id: 'todo',        label: 'Backlog / To-Do', color: '#71717a' },
+  { id: 'in-progress', label: 'In Progress',     color: '#f97316' },
+  { id: 'done',        label: 'Done',            color: '#14b8a6' },
+]
+
+const projectProgress = (proj) => {
+  if (!proj.tasks.length) return 0
+  return Math.round((proj.tasks.filter(t => t.status === 'done').length / proj.tasks.length) * 100)
+}
+
+const doneTasks = (proj) => proj.tasks.filter(t => t.status === 'done').length
+
+function openProject(id) {
+  activeProject.value = projects.value.find(p => p.id === id) ?? null
+}
+
+function deleteProject(id) {
+  projects.value = projects.value.filter(p => p.id !== id)
+  if (activeProject.value?.id === id) activeProject.value = null
+}
+
+// Kanban helpers
+function tasksInCol(colId) {
+  return activeProject.value?.tasks.filter(t => t.status === colId) ?? []
+}
+
+const moveMap = {
+  'todo':        [{ to: 'in-progress', label: '▶ In Progress' }, { to: 'done', label: '✓ Done' }],
+  'in-progress': [{ to: 'todo', label: '← Backlog' },            { to: 'done', label: '✓ Done' }],
+  'done':        [{ to: 'in-progress', label: '↩ In Progress' }, { to: 'todo', label: '← Backlog' }],
+}
+function movesFor(task) { return moveMap[task.status] ?? [] }
+
+function moveTask(taskId, toStatus) {
+  const task = activeProject.value?.tasks.find(t => t.id === taskId)
+  if (task) task.status = toStatus
+}
+
+function addTask(colId) {
+  const title = prompt('Judul task baru:')
+  if (!title?.trim()) return
+  const priority = prompt('Priority (high/medium/low):', 'medium') || 'medium'
+  activeProject.value.tasks.push(mkTask(title.trim(), colId, priority))
+}
+
+function deleteTask(taskId) {
+  if (!activeProject.value) return
+  activeProject.value.tasks = activeProject.value.tasks.filter(t => t.id !== taskId)
+}
+
+// Bookmarks
+const showBookmarkForm = ref(false)
+const bmTitle = ref('')
+const bmUrl   = ref('')
+
+function addBookmark() {
+  if (!bmTitle.value.trim() || !bmUrl.value.trim()) return
+  const url = bmUrl.value.startsWith('http') ? bmUrl.value : 'https://' + bmUrl.value
+  activeProject.value.bookmarks.push({
+    id: Date.now(),
+    title: bmTitle.value.trim(),
+    url,
+  })
+  showBookmarkForm.value = false
+  bmTitle.value = ''
+  bmUrl.value   = ''
+}
+
+function deleteBookmark(id) {
+  if (!activeProject.value) return
+  activeProject.value.bookmarks = activeProject.value.bookmarks.filter(b => b.id !== id)
+}
+
+// New Project Modal
+const showNewProjectModal = ref(false)
+const newProj = ref({
+  name: '', description: '', techStr: '', githubUrl: '', figmaUrl: '',
+  emoji: '🚀', color: '#14b8a6',
+})
+
+function createProject() {
+  if (!newProj.value.name.trim()) return
+  const id = Date.now()
+  projects.value.push({
+    id,
+    name:        newProj.value.name.trim(),
+    description: newProj.value.description.trim(),
+    emoji:       newProj.value.emoji || '📁',
+    color:       newProj.value.color,
+    tech:        newProj.value.techStr.split(',').map(s => s.trim()).filter(Boolean),
+    githubUrl:   newProj.value.githubUrl.trim(),
+    figmaUrl:    newProj.value.figmaUrl.trim(),
+    tasks:       [],
+    bookmarks:   [],
+  })
+  newProj.value = { name: '', description: '', techStr: '', githubUrl: '', figmaUrl: '', emoji: '🚀', color: '#14b8a6' }
+  showNewProjectModal.value = false
+}
+
 // ─── API: FETCH ───────────────────────────────────────────────────
+
 async function fetchNotes() {
   isLoading.value = true
   loadError.value = null
