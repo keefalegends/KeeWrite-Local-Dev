@@ -800,13 +800,13 @@
                      class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center
                             text-zinc-500 hover:text-white transition-all"
                      title="GitHub">
-                    <Github :size="13" />
+                    <GitBranch :size="13" />
                   </a>
                   <a v-if="proj.figmaUrl" :href="proj.figmaUrl" target="_blank"
                      class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-purple-500/30 flex items-center justify-center
                             text-zinc-500 hover:text-purple-400 transition-all"
                      title="Figma">
-                    <Figma :size="13" />
+                    <Palette :size="13" />
                   </a>
                   <button @click.stop="deleteProject(proj.id)"
                           class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-red-500/20 flex items-center justify-center
@@ -1179,7 +1179,7 @@ import {
   Plus, Trash2, CalendarDays, Clock, RefreshCw, CalendarCheck,
   Save, CheckCircle, Code2, Eye, Timer, RotateCcw, Pause, Play, WifiOff,
   Moon, Sun, ChevronLeft, ChevronRight, X, Pencil,
-  Github, Figma, ArrowLeft, Bookmark, Link2, ExternalLink,
+  GitBranch, Palette, ArrowLeft, Bookmark, Link2, ExternalLink,
 } from '@lucide/vue'
 
 // ─── CONSTANTS ────────────────────────────────────────────────────
