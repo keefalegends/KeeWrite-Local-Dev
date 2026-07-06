@@ -51,8 +51,10 @@ html, body, #app {
 [data-theme="light"] .bg-zinc-700  { background-color: #cbd5e1 !important; }
 
 /* Background with opacity — override via filter */
-[data-theme="light"] .bg-zinc-950\/60 { background-color: rgba(248,250,252,0.8) !important; }
-[data-theme="light"] .bg-zinc-900\/50 { background-color: rgba(241,245,249,0.9) !important; }
+[data-theme="light"] .bg-zinc-950\/60 { background-color: rgba(241,245,249,0.8) !important; }
+[data-theme="light"] .bg-zinc-950\/70 { background-color: rgba(241,245,249,0.8) !important; }
+[data-theme="light"] .bg-zinc-900\/70 { background-color: rgba(255, 255, 255, 0.8) !important; }
+[data-theme="light"] .bg-zinc-900\/50 { background-color: rgba(255, 255, 255, 0.9) !important; }
 [data-theme="light"] .bg-zinc-800\/60 { background-color: rgba(226,232,240,0.7) !important; }
 [data-theme="light"] .bg-zinc-800\/50 { background-color: rgba(226,232,240,0.5) !important; }
 
@@ -101,9 +103,19 @@ html, body, #app {
 [data-theme="light"] select { background-color: #e2e8f0 !important; }
 
 /* Markdown preview text in light mode */
-[data-theme="light"] .flex-1.overflow-y-auto p,
-[data-theme="light"] .flex-1.overflow-y-auto li,
-[data-theme="light"] .flex-1.overflow-y-auto blockquote { color: #334155 !important; }
+[data-theme="light"] .markdown-preview-body h1,
+[data-theme="light"] .markdown-preview-body h2,
+[data-theme="light"] .markdown-preview-body h3,
+[data-theme="light"] .markdown-preview-body h4,
+[data-theme="light"] .markdown-preview-body h5,
+[data-theme="light"] .markdown-preview-body h6,
+[data-theme="light"] .markdown-preview-body p,
+[data-theme="light"] .markdown-preview-body li,
+[data-theme="light"] .markdown-preview-body ul,
+[data-theme="light"] .markdown-preview-body ol,
+[data-theme="light"] .markdown-preview-body blockquote,
+[data-theme="light"] .markdown-preview-body strong,
+[data-theme="light"] .markdown-preview-body code { color: #1e293b !important; }
 
 /* Code blocks in light mode */
 [data-theme="light"] pre { background: #f8fafc !important; border-color: #e2e8f0 !important; }

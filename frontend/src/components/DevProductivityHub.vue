@@ -790,7 +790,7 @@
                 <Eye :size="12" class="text-teal-500" />
                 <span class="text-[10px] text-zinc-500 uppercase tracking-wider">Preview</span>
               </div>
-              <div class="flex-1 overflow-y-auto p-4" v-html="renderedMarkdown" />
+              <div class="flex-1 overflow-y-auto p-4 markdown-preview-body" v-html="renderedMarkdown" />
             </div>
           </div>
 
