@@ -173,7 +173,8 @@ Base URL: `http://127.0.0.1:8000/api`
 
 ## 📸 Screenshot
 
-> Tambahkan screenshot di sini setelah deployment.
+> <img width="1920" height="890" alt="image" src="https://github.com/user-attachments/assets/7f6667bf-1c85-4260-a956-4d38a35077de" />
+
 
 ---
 
