@@ -1813,6 +1813,7 @@ async function saveDeadlineFromModal() {
   } finally {
     isSavingDeadline.value = false
   }
+}
 
 const modalHasExistingDeadline = computed(() => {
   if (modalTargetType.value === 'note') {
