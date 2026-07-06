@@ -244,23 +244,39 @@
       <!-- ── VIEW: CALENDAR ── -->
       <div v-else-if="activeNav === 'Calendar'" class="flex-1 flex flex-col items-center justify-start p-8 overflow-y-auto">
         <div class="w-full max-w-lg">
+
           <!-- Title -->
-          <div class="flex items-center gap-3 mb-8">
+          <div class="flex items-center gap-3 mb-6">
             <div class="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center">
               <CalendarIcon :size="20" class="text-teal-400" />
             </div>
             <div>
               <h1 class="text-lg font-bold text-white">Kalender</h1>
-              <p class="text-xs text-zinc-500">Juli 2026 — Deadline notes kamu</p>
+              <p class="text-xs text-zinc-500">{{ calMonthLabel }} — klik tanggal untuk atur deadline</p>
             </div>
           </div>
 
           <!-- Calendar card -->
           <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-2xl">
-            <!-- Month header -->
+
+            <!-- Month nav header -->
             <div class="flex items-center justify-between mb-5">
-              <span class="text-base font-semibold text-white tracking-wide">Juli 2026</span>
-              <div class="flex items-center gap-2 text-xs text-zinc-500">
+              <div class="flex items-center gap-2">
+                <button @click="prevMonth"
+                        class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center
+                               text-zinc-400 hover:text-white transition-colors">
+                  <ChevronLeft :size="14" />
+                </button>
+                <span class="text-base font-semibold text-white tracking-wide min-w-[120px] text-center">
+                  {{ calMonthLabel }}
+                </span>
+                <button @click="nextMonth"
+                        class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center
+                               text-zinc-400 hover:text-white transition-colors">
+                  <ChevronRight :size="14" />
+                </button>
+              </div>
+              <div class="flex items-center gap-3 text-xs text-zinc-500">
                 <span class="flex items-center gap-1">
                   <span class="w-2 h-2 rounded-full bg-teal-500 inline-block"></span> Hari ini
                 </span>
@@ -280,51 +296,213 @@
 
             <!-- Date grid -->
             <div class="grid grid-cols-7 gap-1">
-              <div v-for="i in leadingBlanks" :key="`blank-${i}`" />
-              <div
-                v-for="day in 31"
+              <div v-for="i in calLeadingBlanks" :key="`blank-${i}`" />
+              <button
+                v-for="day in calDaysInMonth"
                 :key="day"
-                :class="['relative flex flex-col items-center justify-center rounded-xl py-2.5 text-sm font-medium transition-all cursor-default',
-                         day === TODAY_DAY
+                @click="openDeadlineModal(day)"
+                :class="['relative flex flex-col items-center justify-center rounded-xl py-2.5 text-sm font-medium transition-all cursor-pointer group',
+                         isToday(day)
                            ? 'bg-teal-500 text-white font-bold shadow-lg shadow-teal-900/50'
-                           : deadlineDays.has(day)
-                             ? 'bg-orange-500/15 text-orange-300 border border-orange-500/30'
+                           : calDeadlineDays.has(day)
+                             ? 'bg-orange-500/15 text-orange-300 border border-orange-500/30 hover:bg-orange-500/25'
                              : 'text-zinc-400 hover:bg-zinc-800 hover:text-white']"
+                :title="`Atur deadline: ${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`"
               >
                 {{ day }}
+                <!-- deadline dot -->
                 <span
-                  v-if="deadlineDays.has(day) && day !== TODAY_DAY"
+                  v-if="calDeadlineDays.has(day) && !isToday(day)"
                   class="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-orange-400"
                 />
-              </div>
+                <!-- hover add hint -->
+                <span
+                  v-if="!calDeadlineDays.has(day) && !isToday(day)"
+                  class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Plus :size="12" class="text-teal-400" />
+                </span>
+              </button>
             </div>
           </div>
 
-          <!-- Deadline list -->
+          <!-- Upcoming Deadlines (semua notes, diurutkan terdekat) -->
           <div class="mt-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-            <p class="text-[10px] text-zinc-500 uppercase tracking-wider mb-3 font-semibold">Upcoming Deadlines</p>
-            <div v-if="notesWithDeadline.length === 0" class="text-center py-4 text-zinc-600 text-sm">
-              Tidak ada deadline bulan ini
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Upcoming Deadlines</p>
+              <span class="text-[10px] text-zinc-600">{{ upcomingDeadlines.length }} catatan</span>
             </div>
+
+            <div v-if="upcomingDeadlines.length === 0" class="text-center py-6 text-zinc-600">
+              <CalendarDays :size="28" class="mx-auto mb-2 opacity-30" />
+              <p class="text-sm">Belum ada deadline.</p>
+              <p class="text-xs mt-1 opacity-60">Klik tanggal di kalender untuk menambahkan.</p>
+            </div>
+
             <div v-else class="space-y-2">
-              <div v-for="note in notesWithDeadline" :key="note.id"
-                   @click="selectNote(note.id); activeNav = 'Notes'"
-                   class="flex items-center gap-3 p-3 rounded-xl bg-zinc-800/50 hover:bg-zinc-800
-                          border border-zinc-700/50 cursor-pointer transition-all group">
-                <div class="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                  <CalendarDays :size="14" class="text-orange-400" />
+              <div
+                v-for="note in upcomingDeadlines"
+                :key="note.id"
+                class="flex items-center gap-3 p-3 rounded-xl bg-zinc-800/50 hover:bg-zinc-800
+                       border transition-all group cursor-pointer"
+                :class="isPastDeadline(note.deadline_at)
+                          ? 'border-red-500/30 bg-red-500/5'
+                          : isTodayDeadline(note.deadline_at)
+                            ? 'border-orange-500/50 bg-orange-500/8'
+                            : 'border-zinc-700/50'"
+              >
+                <!-- Icon -->
+                <div
+                  :class="['w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
+                           isPastDeadline(note.deadline_at) ? 'bg-red-500/20' :
+                           isTodayDeadline(note.deadline_at) ? 'bg-orange-500/20' : 'bg-orange-500/20']"
+                >
+                  <CalendarDays
+                    :size="15"
+                    :class="isPastDeadline(note.deadline_at) ? 'text-red-400' : 'text-orange-400'"
+                  />
                 </div>
+
+                <!-- Info -->
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium text-zinc-200 truncate group-hover:text-white transition-colors">
                     {{ note.title || 'Untitled Note' }}
                   </p>
-                  <p class="text-[11px] text-orange-400">{{ note.deadline_at }}</p>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <p :class="['text-[11px] font-mono',
+                               isPastDeadline(note.deadline_at) ? 'text-red-400' :
+                               isTodayDeadline(note.deadline_at) ? 'text-orange-400' : 'text-orange-400']">
+                      {{ note.deadline_at }}
+                    </p>
+                    <span v-if="isPastDeadline(note.deadline_at)"
+                          class="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">Lewat</span>
+                    <span v-else-if="isTodayDeadline(note.deadline_at)"
+                          class="text-[9px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full">Hari ini!</span>
+                    <span v-else
+                          class="text-[9px] text-zinc-600">{{ daysUntil(note.deadline_at) }} hari lagi</span>
+                  </div>
                 </div>
-                <span class="text-[10px] text-zinc-500 group-hover:text-zinc-300 transition-colors">Buka →</span>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    @click.stop="openDeadlineModal(null, note.id)"
+                    class="w-7 h-7 rounded-lg bg-zinc-700 hover:bg-orange-500/20 flex items-center justify-center
+                           text-zinc-500 hover:text-orange-400 transition-all"
+                    title="Ubah deadline"
+                  >
+                    <Pencil :size="11" />
+                  </button>
+                  <button
+                    @click.stop="selectNote(note.id); activeNav = 'Notes'"
+                    class="text-[10px] text-zinc-500 hover:text-teal-400 transition-colors px-2 py-1
+                           rounded-lg hover:bg-teal-500/10"
+                  >
+                    Buka →
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- ── DEADLINE MODAL ── -->
+        <Transition name="modal">
+          <div v-if="showDeadlineModal"
+               class="fixed inset-0 z-50 flex items-center justify-center"
+               @click.self="closeDeadlineModal">
+
+            <!-- Backdrop -->
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+            <!-- Modal box -->
+            <div class="relative w-full max-w-sm mx-4 bg-zinc-900 border border-zinc-700 rounded-2xl
+                        shadow-2xl overflow-hidden animate-fadeIn">
+
+              <!-- Header -->
+              <div class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-zinc-800">
+                <div class="w-9 h-9 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                  <CalendarDays :size="18" class="text-orange-400" />
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm font-semibold text-white">
+                    {{ modalClickedDate ? 'Atur Deadline untuk ' + modalDateLabel : 'Ubah Deadline' }}
+                  </p>
+                  <p class="text-[11px] text-zinc-500 mt-0.5">
+                    {{ modalClickedDate ? 'Pilih catatan yang ingin diberi deadline ini' : 'Pilih catatan & tanggal baru' }}
+                  </p>
+                </div>
+                <button @click="closeDeadlineModal"
+                        class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center
+                               text-zinc-400 hover:text-white transition-colors">
+                  <X :size="14" />
+                </button>
+              </div>
+
+              <!-- Body -->
+              <div class="px-5 py-4 space-y-4">
+
+                <!-- Note selector -->
+                <div>
+                  <label class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1.5 block font-medium">
+                    Catatan
+                  </label>
+                  <select
+                    v-model="modalNoteId"
+                    class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm
+                           text-zinc-200 focus:outline-none focus:border-orange-500 transition-colors"
+                  >
+                    <option value="">— Pilih catatan —</option>
+                    <option v-for="n in notes" :key="n.id" :value="n.id">
+                      {{ n.title || 'Untitled Note' }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Date selector (if opened without specific date) -->
+                <div v-if="!modalClickedDate">
+                  <label class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1.5 block font-medium">
+                    Tanggal Deadline
+                  </label>
+                  <input
+                    type="date"
+                    v-model="modalDate"
+                    class="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm
+                           text-orange-400 focus:outline-none focus:border-orange-500 cursor-pointer transition-colors"
+                  />
+                </div>
+
+                <!-- Current deadline info -->
+                <div v-if="modalNoteId && selectedModalNote?.deadline_at"
+                     class="flex items-center gap-2 text-xs text-zinc-500 bg-zinc-800/50 px-3 py-2 rounded-lg">
+                  <CalendarDays :size="12" class="text-zinc-400" />
+                  <span>Deadline sekarang: </span>
+                  <span class="text-orange-400 font-mono">{{ selectedModalNote.deadline_at }}</span>
+                </div>
+              </div>
+
+              <!-- Footer -->
+              <div class="flex gap-2 px-5 pb-5">
+                <button
+                  @click="closeDeadlineModal"
+                  class="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm
+                         hover:bg-zinc-800 hover:text-zinc-200 transition-all"
+                >
+                  Batal
+                </button>
+                <button
+                  @click="saveDeadlineFromModal"
+                  :disabled="!modalNoteId || isSavingDeadline"
+                  class="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-400 text-white text-sm
+                         font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed
+                         flex items-center justify-center gap-2"
+                >
+                  <span v-if="isSavingDeadline" class="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  {{ isSavingDeadline ? 'Menyimpan...' : 'Simpan Deadline' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
       </div>
 
       <!-- ── VIEW: NOTES (Editor) ── -->
@@ -581,15 +759,15 @@ import {
   LayoutDashboard, FileText, FolderKanban, Calendar as CalendarIcon, Settings,
   Plus, Trash2, CalendarDays, Clock, RefreshCw, CalendarCheck,
   Save, CheckCircle, Code2, Eye, Timer, RotateCcw, Pause, Play, WifiOff,
-  Moon, Sun,
+  Moon, Sun, ChevronLeft, ChevronRight, X, Pencil,
 } from '@lucide/vue'
 
 // ─── CONSTANTS ────────────────────────────────────────────────────
-const POMO_DURATION    = 25 * 60
-const circumference    = 2 * Math.PI * 54   // ring kecil (sidebar)
-const circumferenceLarge = 2 * Math.PI * 70 // ring besar (dashboard)
-const TODAY_DAY        = new Date().getDate()
-const leadingBlanks    = new Date(2026, 6, 1).getDay() // Juli 2026 = Rabu = 3
+const POMO_DURATION      = 25 * 60
+const circumference      = 2 * Math.PI * 54
+const circumferenceLarge = 2 * Math.PI * 70
+const TODAY              = new Date()
+const TODAY_DAY          = TODAY.getDate()
 
 // ─── THEME ────────────────────────────────────────────────────────
 const isDark = ref(localStorage.getItem('keewrite-theme') !== 'light')
@@ -731,15 +909,127 @@ watch(timerRunning, running => {
 })
 
 // ─── CALENDAR ─────────────────────────────────────────────────────
-const deadlineDays = computed(() => {
+// navigasi bulan
+const calYear  = ref(new Date().getFullYear())
+const calMonth = ref(new Date().getMonth()) // 0-indexed
+
+const calMonthLabel = computed(() =>
+  new Date(calYear.value, calMonth.value, 1)
+    .toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+)
+
+const calDaysInMonth = computed(() =>
+  new Date(calYear.value, calMonth.value + 1, 0).getDate()
+)
+
+// getDay() returns 0=Sun, need Mon-first (1=Mon, 2=Tue ... 0=Sun → 6)
+const calLeadingBlanks = computed(() => {
+  const d = new Date(calYear.value, calMonth.value, 1).getDay()
+  return d === 0 ? 6 : d - 1 // convert Sun=0 → 6 blanks, Mon=1 → 0 blanks
+})
+
+// set deadlines pada bulan yang sedang ditampilkan
+const calDeadlineDays = computed(() => {
+  const ym = `${calYear.value}-${String(calMonth.value + 1).padStart(2, '0')}`
   const days = new Set()
   notes.value.forEach(n => {
-    if (n.deadline_at && n.deadline_at.startsWith('2026-07')) {
+    if (n.deadline_at && n.deadline_at.startsWith(ym)) {
       days.add(parseInt(n.deadline_at.split('-')[2], 10))
     }
   })
   return days
 })
+
+function prevMonth() {
+  if (calMonth.value === 0) { calMonth.value = 11; calYear.value-- }
+  else calMonth.value--
+}
+function nextMonth() {
+  if (calMonth.value === 11) { calMonth.value = 0; calYear.value++ }
+  else calMonth.value++
+}
+
+function isToday(day) {
+  return day === TODAY_DAY
+    && calMonth.value === TODAY.getMonth()
+    && calYear.value  === TODAY.getFullYear()
+}
+
+// Deadline helpers
+function isPastDeadline(dateStr) {
+  if (!dateStr) return false
+  return new Date(dateStr) < new Date(TODAY.toDateString())
+}
+function isTodayDeadline(dateStr) {
+  if (!dateStr) return false
+  return dateStr === TODAY.toISOString().slice(0, 10)
+}
+function daysUntil(dateStr) {
+  const diff = new Date(dateStr) - new Date(TODAY.toDateString())
+  return Math.ceil(diff / 86400000)
+}
+
+// Semua notes dengan deadline, diurutkan terdekat dari hari ini
+const upcomingDeadlines = computed(() =>
+  notes.value
+    .filter(n => n.deadline_at)
+    .sort((a, b) => a.deadline_at.localeCompare(b.deadline_at))
+)
+
+// ── DEADLINE MODAL ────────────────────────────────────────────────
+const showDeadlineModal  = ref(false)
+const modalClickedDate   = ref(null)   // null or number day
+const modalDate          = ref('')     // YYYY-MM-DD string
+const modalNoteId        = ref('')
+const isSavingDeadline   = ref(false)
+
+const modalDateLabel = computed(() => {
+  if (!modalClickedDate.value) return ''
+  return new Date(calYear.value, calMonth.value, modalClickedDate.value)
+    .toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+})
+
+const selectedModalNote = computed(() =>
+  notes.value.find(n => n.id == modalNoteId.value) ?? null
+)
+
+function openDeadlineModal(day = null, preselectedNoteId = null) {
+  modalClickedDate.value = day
+  modalNoteId.value      = preselectedNoteId ? String(preselectedNoteId) : ''
+  if (day) {
+    modalDate.value = `${calYear.value}-${String(calMonth.value + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  } else {
+    // pre-fill with note's existing deadline
+    const note = notes.value.find(n => n.id == preselectedNoteId)
+    modalDate.value = note?.deadline_at ?? ''
+  }
+  showDeadlineModal.value = true
+}
+
+function closeDeadlineModal() {
+  showDeadlineModal.value = false
+  modalClickedDate.value  = null
+  modalNoteId.value       = ''
+  modalDate.value         = ''
+}
+
+async function saveDeadlineFromModal() {
+  if (!modalNoteId.value || !modalDate.value) return
+  isSavingDeadline.value = true
+  try {
+    const response = await axios.put(`/api/notes/${modalNoteId.value}`, {
+      deadline_at: modalDate.value,
+    })
+    const updated = response.data.data
+    const idx = notes.value.findIndex(n => n.id == modalNoteId.value)
+    if (idx !== -1) notes.value[idx].deadline_at = updated.deadline_at
+    closeDeadlineModal()
+  } catch (err) {
+    console.error('[DevHub] Gagal simpan deadline:', err)
+  } finally {
+    isSavingDeadline.value = false
+  }
+}
 
 // ─── API: FETCH ───────────────────────────────────────────────────
 async function fetchNotes() {

@@ -98,3 +98,12 @@ html, body, #app {
 
 /* Code blocks in light mode */
 [data-theme="light"] pre { background: #f8fafc !important; border-color: #e2e8f0 !important; }
+
+/* ── Modal transition ── */
+.modal-enter-active, .modal-leave-active { transition: opacity 0.2s ease; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
+.modal-enter-active .relative,
+.modal-leave-active .relative { transition: transform 0.2s ease, opacity 0.2s ease; }
+.modal-enter-from .relative,
+.modal-leave-to   .relative   { transform: scale(0.95) translateY(8px); opacity: 0; }
+
