@@ -1409,7 +1409,7 @@ const TODAY              = new Date()
 const TODAY_DAY          = TODAY.getDate()
 
 // ─── THEME ────────────────────────────────────────────────────────
-const isDark = ref(localStorage.getItem('keewrite-theme') !== 'light')
+const isDark = ref(localStorage.getItem('keewrite-theme') === 'dark')
 
 function toggleTheme() {
   isDark.value = !isDark.value
@@ -1423,7 +1423,7 @@ function setTheme(dark) {
 
 // ─── NAVIGATION ───────────────────────────────────────────────────
 const sidebarOpen = ref(true)
-const activeNav   = ref('Notes')
+const activeNav   = ref('Dashboard')
 
 const navItems = [
   { name: 'Dashboard', icon: LayoutDashboard },
