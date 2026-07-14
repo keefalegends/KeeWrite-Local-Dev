@@ -51,30 +51,31 @@ html, body, #app {
 }
 
 body {
-  background: linear-gradient(135deg, #0d1a2c 0%, #152b47 30%, #004c8c 65%, #00582d 100%) !important;
-  background-attachment: fixed !important;
-  background-size: cover !important;
-  position: relative;
+  background-color: #0d1a2c !important;
   overflow: hidden;
   color: #eff4f8;
 }
 
-/* Ambient Aurora energy background lights */
-body::before {
-  content: "";
-  position: absolute;
-  top: -15%;
-  left: -20%;
-  width: 140%;
-  height: 130%;
-  background: radial-gradient(circle at 10% 20%, rgba(107, 254, 156, 0.14) 0%, transparent 40%),
-              radial-gradient(circle at 90% 80%, rgba(0, 120, 215, 0.22) 0%, transparent 50%),
-              radial-gradient(circle at 50% 15%, rgba(164, 201, 255, 0.16) 0%, transparent 35%),
-              radial-gradient(circle at 75% 30%, rgba(0, 109, 55, 0.10) 0%, transparent 30%);
-  filter: blur(80px);
-  z-index: -1;
-  pointer-events: none;
+/* ── AeroScript Dynamic Aurora Backgrounds ── */
+div[data-theme="dark"] {
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(107, 254, 156, 0.14) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(0, 120, 215, 0.22) 0%, transparent 50%),
+    radial-gradient(circle at 50% 15%, rgba(164, 201, 255, 0.16) 0%, transparent 35%),
+    radial-gradient(circle at 75% 30%, rgba(0, 109, 55, 0.10) 0%, transparent 30%),
+    linear-gradient(135deg, #0d1a2c 0%, #152b47 30%, #004c8c 65%, #00582d 100%) !important;
+  color: #eff4f8 !important;
 }
+
+div[data-theme="light"] {
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(107, 254, 156, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(0, 120, 215, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.4) 0%, transparent 35%),
+    linear-gradient(135deg, #eaf3fa 0%, #d8e6f3 35%, #a4c9ff 70%, #d0ffd8 100%) !important;
+  color: #171c1f !important;
+}
+
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Plus Jakarta Sans', sans-serif !important;
@@ -144,10 +145,6 @@ input:focus, textarea:focus, select:focus {
 /* ── Light Mode Glassmorphism Overrides ── */
 [data-theme="light"] {
   color-scheme: light;
-}
-[data-theme="light"] body {
-  color: #171c1f !important;
-  background: linear-gradient(135deg, #eaf3fa 0%, #d8e6f3 35%, #a4c9ff 70%, #d0ffd8 100%) !important;
 }
 [data-theme="light"] .bg-zinc-900 {
   background: rgba(255, 255, 255, 0.55) !important;
@@ -249,6 +246,9 @@ input:focus, textarea:focus, select:focus {
   border-top-color: rgba(255, 255, 255, 0.3) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.12) !important;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
+}
+.bg-teal-500\/15 *, .bg-teal-500\/10 *, .bg-teal-500\/20 * {
+  color: #ffffff !important;
 }
 [data-theme="light"] .bg-teal-500\/15, 
 [data-theme="light"] .bg-teal-500\/10,
