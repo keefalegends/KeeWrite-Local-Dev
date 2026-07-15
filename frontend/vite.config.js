@@ -13,7 +13,7 @@ export default defineConfig({
     // Proxy /api requests to Laravel so no CORS issue in development
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://api.keewrite.my.id/api',
         changeOrigin: true,
       },
     },
