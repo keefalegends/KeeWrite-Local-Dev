@@ -38,9 +38,9 @@
           :id="`nav-${item.name.toLowerCase()}`"
           @click="activeNav = item.name"
           :class="['w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all',
-                   activeNav === item.name
-                     ? 'bg-teal-500/15 text-teal-400 font-medium'
-                     : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800']"
+           activeNav === item.name
+             ? 'nav-active font-medium'
+             : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800']"
         >
           <component :is="item.icon" :size="16" class="flex-shrink-0" />
           <span v-if="sidebarOpen" class="truncate">{{ item.name }}</span>
@@ -165,7 +165,7 @@
           <!-- Left/Dominant Column: Pomodoro Timer & Log -->
           <div class="lg:col-span-7 space-y-6">
             <!-- Timer card -->
-            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 flex flex-col items-center gap-6 shadow-2xl">
+            <div class="dashboard-glass-card bg-zinc-900 border border-zinc-800 rounded-2xl p-8 flex flex-col items-center gap-6 shadow-2xl">
               <!-- SVG Ring -->
               <div class="relative flex items-center justify-center" style="width:180px;height:180px">
                 <svg width="180" height="180" viewBox="0 0 180 180"
@@ -196,22 +196,22 @@
               </div>
 
               <!-- Controls -->
-              <div class="flex items-center gap-4">
+              <div class="pomo-control-group" role="group" aria-label="Kontrol Pomodoro">
                 <button id="pomo-reset" @click="resetTimer"
-                        class="w-11 h-11 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center
-                               transition-colors border border-zinc-700" title="Reset">
-                  <RotateCcw :size="16" class="text-zinc-400" />
+                        class="pomo-control pomo-control-secondary" title="Reset">
+                  <RotateCcw :size="16" />
+                  <span class="sr-only">Reset timer</span>
                 </button>
                 <button id="pomo-playpause" @click="toggleTimer"
-                        class="w-16 h-16 rounded-full bg-orange-500 hover:bg-orange-400 flex items-center justify-center
-                               transition-all shadow-xl shadow-orange-900/50">
-                  <Pause v-if="timerRunning" :size="24" class="text-white" />
-                  <Play  v-else              :size="24" class="text-white" />
+                        class="pomo-control pomo-control-primary">
+                  <Pause v-if="timerRunning" :size="22" />
+                  <Play  v-else              :size="22" />
+                  <span class="sr-only">{{ timerRunning ? 'Jeda timer' : 'Mulai timer' }}</span>
                 </button>
                 <button id="pomo-mock-complete" @click="completePomodoro"
-                        class="w-11 h-11 rounded-full bg-zinc-800 hover:bg-teal-700/80 flex items-center justify-center
-                               transition-colors border border-zinc-700" title="Mock Selesai (tes)">
-                  <CheckCircle :size="16" class="text-teal-400" />
+                        class="pomo-control pomo-control-secondary pomo-control-success" title="Mock Selesai (tes)">
+                  <CheckCircle :size="16" />
+                  <span class="sr-only">Selesaikan sesi</span>
                 </button>
               </div>
 
@@ -247,11 +247,11 @@
           <div class="lg:col-span-5 space-y-6">
             
             <!-- Widget 1: Daily Focus Checklist -->
-            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-xl space-y-4">
-              <div class="flex items-center justify-between">
+            <div class="dashboard-glass-card bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-xl space-y-4">
+              <div class="widget-heading flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <CheckCircle :size="16" class="text-orange-400" />
-                  <span class="text-xs font-bold text-white uppercase tracking-wider">Daily Focus</span>
+                  <CheckCircle :size="17" class="text-orange-400" />
+                  <span class="widget-title text-white">Daily Focus</span>
                 </div>
                 <span class="text-[10px] text-zinc-500 font-mono bg-zinc-800 px-2 py-0.5 rounded-full">
                   {{ dailyTasksCompletedCount }}/{{ dailyTasks.length }} Selesai
@@ -310,11 +310,11 @@
             </div>
 
             <!-- Widget 2: LeetCode Daily & Quote -->
-            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-xl space-y-4">
-              <div class="flex items-center justify-between">
+            <div class="dashboard-glass-card bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-xl space-y-4">
+              <div class="widget-heading flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <Code2 :size="16" class="text-teal-400" />
-                  <span class="text-xs font-bold text-white uppercase tracking-wider">LeetCode Daily</span>
+                  <Code2 :size="17" class="text-teal-400" />
+                  <span class="widget-title text-white">LeetCode Daily</span>
                 </div>
                 <span class="text-[10px] bg-teal-500/10 text-teal-400 border border-teal-500/20 px-2.5 py-0.5 rounded-full font-medium">
                   Tantangan Harian
@@ -555,7 +555,7 @@
                @click.self="closeDeadlineModal">
 
             <!-- Backdrop -->
-            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div class="deadline-modal-backdrop absolute inset-0 backdrop-blur-sm" />
 
             <!-- Modal box -->
             <div class="relative w-full max-w-sm mx-4 bg-zinc-900 border border-zinc-700 rounded-2xl
@@ -1269,7 +1269,7 @@
           <div v-if="showNewProjectModal"
                class="fixed inset-0 z-50 flex items-center justify-center"
                @click.self="showNewProjectModal = false">
-            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div class="deadline-modal-backdrop absolute inset-0 backdrop-blur-sm" />
             <div class="relative w-full max-w-md mx-4 bg-zinc-900 border border-zinc-700 rounded-2xl
                         shadow-2xl overflow-hidden animate-fadeIn">
 
