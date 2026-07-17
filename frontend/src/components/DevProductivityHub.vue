@@ -461,7 +461,7 @@
               <div
                 v-for="item in upcomingDeadlines"
                 :key="item.id"
-                class="flex flex-col p-3 rounded-xl bg-zinc-800/50 hover:bg-zinc-800
+                class="upcoming-deadline-item flex flex-col p-3 rounded-xl bg-zinc-800/50 hover:bg-zinc-800
                        border transition-all group cursor-pointer"
                 :class="isPastDeadline(item.deadline_at)
                           ? 'border-red-500/30 bg-red-500/5'
