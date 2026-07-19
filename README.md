@@ -1,4 +1,4 @@
-# KeeWrite 📝
+# KeeWrite - Cool UI📝
 
 > **Developer Productivity Hub** — Aplikasi full-stack untuk mencatat, fokus, dan melacak deadline. Dibangun dengan **Laravel 13** (Backend API) dan **Vue 3** (Frontend SPA).
 
